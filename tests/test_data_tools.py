@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from src.isl_recognition.data import prepare_manifest
 from tools.make_manifest import make_manifest
 from tools.record_clips import (
     append_manifest,
@@ -13,6 +14,13 @@ from tools.record_clips import (
 
 
 class ClipToolTests(unittest.TestCase):
+    def test_preprocessing_missing_source_explains_external_data_requirement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(FileNotFoundError, "held-out live-demo checks"):
+                prepare_manifest(root / "missing.csv", root / "processed")
+            self.assertFalse((root / "processed").exists())
+
     def test_safe_component_rejects_empty_and_normalizes_path_separators(self):
         self.assertEqual(safe_component("HELLO PLEASE", "label"), "HELLO_PLEASE")
         with self.assertRaises(ValueError):

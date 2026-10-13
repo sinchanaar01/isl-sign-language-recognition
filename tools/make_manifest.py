@@ -1,4 +1,4 @@
-"""Validate consented clip metadata/media and make a signer-independent manifest."""
+"""Validate external clip metadata/media and make a signer-independent manifest."""
 
 from __future__ import annotations
 

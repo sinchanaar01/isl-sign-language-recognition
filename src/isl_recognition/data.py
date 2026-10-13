@@ -93,6 +93,13 @@ def prepare_manifest(
 
     source = Path(source_csv)
     output = Path(output_directory)
+    if not source.is_file():
+        raise FileNotFoundError(
+            f"Licensed external clip CSV not found: {source}. Acquire licensed "
+            "training clips and prepare data/raw/downloaded/clips.csv with "
+            "video_path,label,signer_id. Keep data/raw/own/clips.csv reserved for "
+            "held-out live-demo checks."
+        )
     output.mkdir(parents=True, exist_ok=True)
     records: list[dict[str, str]] = []
     failures: list[str] = []

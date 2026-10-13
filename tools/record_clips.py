@@ -1,7 +1,8 @@
-"""Record consented webcam clips into a signer-labeled dataset.
+"""Record consented webcam clips as a separate held-out live-demo set.
 
 Controls while recording: q stops the recording loop; it is never saved.
 After recording: r reviews the most recently saved clip, d deletes it, q exits.
+By default, clips and metadata stay under data/raw/own/ and are not for training.
 """
 
 from __future__ import annotations
@@ -249,9 +250,7 @@ def main() -> None:
     parser.add_argument("--duration", type=float, default=2.5)
     parser.add_argument("--countdown", type=int, default=3)
     parser.add_argument("--output-root", type=Path, default=Path("data/raw/own"))
-    parser.add_argument(
-        "--manifest", type=Path, default=Path("data/raw/own/clips.csv")
-    )
+    parser.add_argument("--manifest", type=Path, default=Path("data/raw/own/clips.csv"))
     args = parser.parse_args()
     record(
         args.signer_id,
