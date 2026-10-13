@@ -1,0 +1,425 @@
+{
+  "kind": "handwritten_offline_agent_evaluation_not_sign_recognition_metric",
+  "completed_at_utc": "2026-10-13T16:45:58.505946+00:00",
+  "source_git_commit": "93b90ab89f9ea0d9af7e60925f6e7b5758f092d2",
+  "source_worktree_dirty": false,
+  "case_count": 30,
+  "llm_provider": null,
+  "sentence_cases": 25,
+  "exact_sentence_matches": 25,
+  "exact_sentence_match_rate": 1.0,
+  "hallucination_cases": 0,
+  "hallucination_rate": 0.0,
+  "repeat_true_positive": 5,
+  "repeat_false_positive": 0,
+  "repeat_false_negative": 0,
+  "repeat_request_precision": 1.0,
+  "cases": [
+    {
+      "case_id": 1,
+      "glosses": [
+        "HELLO"
+      ],
+      "expected_sentence": "Hello!",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Hello!",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_c94f7aa0e9a2472d9cabadb619fca678.jsonl"
+    },
+    {
+      "case_id": 2,
+      "glosses": [
+        "THANK YOU"
+      ],
+      "expected_sentence": "Thank you.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Thank you.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_0584f0e4356e49ff8b8ae9e8b3e2e5d5.jsonl"
+    },
+    {
+      "case_id": 3,
+      "glosses": [
+        "PLEASE"
+      ],
+      "expected_sentence": "Please.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Please.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_ad46a8574e54496cb1d77632bf129ed0.jsonl"
+    },
+    {
+      "case_id": 4,
+      "glosses": [
+        "SORRY"
+      ],
+      "expected_sentence": "Sorry.",
+      "repeat_expected": true,
+      "repeat_predicted": true,
+      "sentence": "Please repeat this sign clearly.",
+      "exact_sentence_match": null,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_58eeb16605eb4463b602a367b89a0e34.jsonl"
+    },
+    {
+      "case_id": 5,
+      "glosses": [
+        "YES"
+      ],
+      "expected_sentence": "Yes.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Yes.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_a72d06545dd545fd82b9067219becb5d.jsonl"
+    },
+    {
+      "case_id": 6,
+      "glosses": [
+        "NO"
+      ],
+      "expected_sentence": "No.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "No.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_729f7f25af2045eca0d585eb23b5a765.jsonl"
+    },
+    {
+      "case_id": 7,
+      "glosses": [
+        "HELP"
+      ],
+      "expected_sentence": "Help.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Help.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_0aab60e3e7c8442289c8ab31e20b5963.jsonl"
+    },
+    {
+      "case_id": 8,
+      "glosses": [
+        "WATER"
+      ],
+      "expected_sentence": "Water.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Water.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_f5e13b02c036473eb5ca965cc41638b5.jsonl"
+    },
+    {
+      "case_id": 9,
+      "glosses": [
+        "FOOD"
+      ],
+      "expected_sentence": "Food.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Food.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_ec4d8f25e3044867b404fbb51ac966e5.jsonl"
+    },
+    {
+      "case_id": 10,
+      "glosses": [
+        "HOME"
+      ],
+      "expected_sentence": "Home.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Home.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_1c610871c13147bcaef08fd78c0a60df.jsonl"
+    },
+    {
+      "case_id": 11,
+      "glosses": [
+        "FAMILY"
+      ],
+      "expected_sentence": "Family.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Family.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_932c00dc9b1d4102aa0d6930728eaf01.jsonl"
+    },
+    {
+      "case_id": 12,
+      "glosses": [
+        "FRIEND"
+      ],
+      "expected_sentence": "Friend.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Friend.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_e867fa985594481e87c671bc6bc551cc.jsonl"
+    },
+    {
+      "case_id": 13,
+      "glosses": [
+        "LOVE"
+      ],
+      "expected_sentence": "Love.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Love.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_b4c5efd1a6ba48d5b19bfcd09765f005.jsonl"
+    },
+    {
+      "case_id": 14,
+      "glosses": [
+        "GOOD"
+      ],
+      "expected_sentence": "Good.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Good.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_270de9df31bd4a1bbb26b200771abbcc.jsonl"
+    },
+    {
+      "case_id": 15,
+      "glosses": [
+        "BAD"
+      ],
+      "expected_sentence": "Bad.",
+      "repeat_expected": true,
+      "repeat_predicted": true,
+      "sentence": "Please repeat this sign clearly.",
+      "exact_sentence_match": null,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_4d221e1436c54809987fe44545b165e8.jsonl"
+    },
+    {
+      "case_id": 16,
+      "glosses": [
+        "STOP"
+      ],
+      "expected_sentence": "Stop.",
+      "repeat_expected": true,
+      "repeat_predicted": true,
+      "sentence": "Please repeat this sign clearly.",
+      "exact_sentence_match": null,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_ebabcfd6982f4055bc9ea17e15ec601b.jsonl"
+    },
+    {
+      "case_id": 17,
+      "glosses": [
+        "WAIT"
+      ],
+      "expected_sentence": "Wait.",
+      "repeat_expected": true,
+      "repeat_predicted": true,
+      "sentence": "Please repeat this sign clearly.",
+      "exact_sentence_match": null,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_4bab1bc9a3fd4d6bbba64df8782ef667.jsonl"
+    },
+    {
+      "case_id": 18,
+      "glosses": [
+        "NAME"
+      ],
+      "expected_sentence": "Name.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Name.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_67ecbefa75fa4c3484a6a973c142f780.jsonl"
+    },
+    {
+      "case_id": 19,
+      "glosses": [
+        "WHAT"
+      ],
+      "expected_sentence": "What.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "What.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_02559debe0a24438b0a648da547eefe4.jsonl"
+    },
+    {
+      "case_id": 20,
+      "glosses": [
+        "WHERE"
+      ],
+      "expected_sentence": "Where.",
+      "repeat_expected": true,
+      "repeat_predicted": true,
+      "sentence": "Please repeat this sign clearly.",
+      "exact_sentence_match": null,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_7e5829cd3a394e829eb712765d7b4e6c.jsonl"
+    },
+    {
+      "case_id": 21,
+      "glosses": [
+        "I",
+        "WANT",
+        "WATER"
+      ],
+      "expected_sentence": "I want water.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "I want water.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_ee646b08c85947b187f209a26845887e.jsonl"
+    },
+    {
+      "case_id": 22,
+      "glosses": [
+        "I",
+        "WANT",
+        "FOOD"
+      ],
+      "expected_sentence": "I want food.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "I want food.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_6a75e3f1e96142f7a4181802b150dd6d.jsonl"
+    },
+    {
+      "case_id": 23,
+      "glosses": [
+        "I",
+        "NEED",
+        "HELP"
+      ],
+      "expected_sentence": "I need help.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "I need help.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_953298724c0a488e98eaf5956a07a3ad.jsonl"
+    },
+    {
+      "case_id": 24,
+      "glosses": [
+        "PLEASE",
+        "HELP",
+        "ME"
+      ],
+      "expected_sentence": "Please help me.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Please help me.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_3040ae923b654be7af26e72c0e1d1c3b.jsonl"
+    },
+    {
+      "case_id": 25,
+      "glosses": [
+        "WHAT",
+        "YOUR",
+        "NAME"
+      ],
+      "expected_sentence": "What is your name?",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "What is your name?",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_24b792453447423b984fbda3a7e732da.jsonl"
+    },
+    {
+      "case_id": 26,
+      "glosses": [
+        "WHERE",
+        "YOU",
+        "LIVE"
+      ],
+      "expected_sentence": "Where do you live?",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Where do you live?",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_72671812b5b14739b852877efa9a68d1.jsonl"
+    },
+    {
+      "case_id": 27,
+      "glosses": [
+        "THANK",
+        "YOU"
+      ],
+      "expected_sentence": "Thank you.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Thank you.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_5ffabde949434450a081b16f8fab2b92.jsonl"
+    },
+    {
+      "case_id": 28,
+      "glosses": [
+        "GOOD",
+        "MORNING"
+      ],
+      "expected_sentence": "Good morning.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Good morning.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_386fcb357ef245fb984454d2e214c6c0.jsonl"
+    },
+    {
+      "case_id": 29,
+      "glosses": [
+        "HELP",
+        "WATER"
+      ],
+      "expected_sentence": "Help water.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Help water.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_ca5ca09fd55d41848d670101050bd6a4.jsonl"
+    },
+    {
+      "case_id": 30,
+      "glosses": [
+        "YES",
+        "NO"
+      ],
+      "expected_sentence": "Yes no.",
+      "repeat_expected": false,
+      "repeat_predicted": false,
+      "sentence": "Yes no.",
+      "exact_sentence_match": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T164558_d0d371516b084e8597ad5fb3897ad0c3.jsonl"
+    }
+  ]
+}

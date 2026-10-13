@@ -45,7 +45,7 @@ Run the offline hand-written agent evaluation:
 python -m tools.evaluate_agent
 ```
 
-The saved run in [`reports/runs/agent_eval_20261013T164359Z.json`](reports/runs/agent_eval_20261013T164359Z.json) evaluates only the text fallback and repeat gate on authored examples; it is **not** sign-recognition accuracy, a human sign-quality evaluation, or an LLM evaluation. The token-based hallucination guard does not establish semantic faithfulness.
+The saved run in [`reports/runs/agent_eval_20261013T164559Z.json`](reports/runs/agent_eval_20261013T164559Z.json) evaluates only the text fallback and repeat gate on authored examples; it is **not** sign-recognition accuracy, a human sign-quality evaluation, or an LLM evaluation. The token-based hallucination guard does not establish semantic faithfulness.
 
 ## Datasets and licenses
 
@@ -123,13 +123,15 @@ If there is no supported local GPU/training stack, use [`notebooks/train_colab.i
 
 ## Run the webcam app
 
-After training a landmark model:
+After training a landmark model, run the app:
 
 ```powershell
 streamlit run app/streamlit_app.py
 ```
 
-Allow browser camera access. The app displays the smoothed top sign and confidence; select **Generate sentence** to send recent sign/confidence pairs to the agent. Low confidence prompts a repeat. Speech uses the browser's local Speech Synthesis API. Webcam access generally requires localhost or HTTPS; remote deployment may require TURN configuration for WebRTC.
+The **Webcam** tab displays the smoothed top sign, confidence bar, processing FPS, per-frame pipeline latency, and stable sign buffer. The **Record and test** tab accepts a short video clip, reports the top classes, measured model-only latency and MediaPipe+model latency, and deletes its temporary upload after inference. No model is included, so neither mode returns predictions until a licensed, trained checkpoint is supplied. Webcam access generally requires localhost or HTTPS; remote deployment may require TURN configuration for WebRTC. No live FPS/latency value has been captured on a real camera in this environment.
+
+Select **Generate and verify sentence** to run the tool-calling loop. The latest tool trace is available in the expandable trace panel. The agent requests a repeat for an individual low-confidence sign and keeps the rest of the buffer. The **Speak sentence** button uses the browser's local Speech Synthesis API after verification.
 
 Optional environment variables:
 
