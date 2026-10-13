@@ -16,9 +16,9 @@ A research prototype for recognizing short, isolated sign clips from a webcam an
 
 ## Problem and scope
 
-This project explores the two-stage problem of recognizing individual signs and composing a sequence into a natural sentence. The classifier predicts isolated glosses; the sentence layer is not a continuous sign-language translation model. English glosses do not encode ISL grammar, facial expression, spatial reference, or signer intent. Output must not be relied upon for safety-critical, legal, or medical communication.
+Indian Sign Language (ISL) is a natural language used by Deaf communities in India. It is not English rendered as hand gestures and is not interchangeable with American Sign Language. Accessible, community-led language technology can make everyday communication tools more inclusive, but an incorrect translation can also create real barriers. This prototype explores recognizing isolated signs and composing a sign stream into English; it is not a continuous ISL translator.
 
-The candidate starter vocabulary is listed in [`data/target_glosses.txt`](data/target_glosses.txt) with an ISLRTC dictionary source citation. The dictionary's entry-level listing could not be verified here; these are lookup candidates, not attested ISL signs. A fluent ISL signer must verify each dictionary entry, variant, and label before any clips are collected or used for training.
+The candidate starter vocabulary is listed in [`data/target_glosses.txt`](data/target_glosses.txt) with an ISLRTC dictionary source citation. The dictionary's entry-level listing could not be verified here; these are lookup candidates, not attested ISL signs. A fluent ISL signer must verify each dictionary entry, variant, and label before any clips are collected or used for training. English glosses do not represent ISL grammar, facial expression, spatial reference, or signer intent; output must not be relied upon for safety-critical, legal, or medical communication.
 
 ## Architecture
 
@@ -64,10 +64,12 @@ Dataset acquisition status, provenance, and reproducible instructions are in [`d
 | Dataset | Language | Local status | Use / restriction |
 | --- | --- | --- | --- |
 | INCLUDE | Indian Sign Language | No media downloaded; first-party download and license were not verified here | Preferred in-domain data source; obtain from its maintainers and record signer IDs and license |
-| WLASL v0.3 | **American Sign Language** | Annotation JSON downloaded to ignored `data/raw/WLASL_v0.3.json`; no videos | Metadata only; upstream requires reading/agreement to C-UDA 1.0 before academic/computational video use; not ISL |
+| WLASL v0.3 | **American Sign Language** | Annotation JSON downloaded to ignored `data/raw/WLASL_v0.3.json`; no videos | Audit log: 2,000 gloss categories and 21,083 annotation instances; metadata only, not training videos; upstream requires reading/agreement to C-UDA 1.0; not ISL |
 | Kaggle ISL | Varies by uploader | No dataset selected/downloaded; discovery blocked and license not verified | Choose an exact dataset only after checking uploader, label meanings, license, and signer IDs |
 
 Raw/derived datasets, model weights, credentials, and experiment runs are excluded from Git. Do not redistribute media unless the original provider's terms allow it.
+
+The observed WLASL metadata values and source checksum are recorded in [`reports/runs/wlasl_metadata_audit.json`](reports/runs/wlasl_metadata_audit.json). They are metadata counts, not videos downloaded, ISL examples, or model-training samples.
 
 ### Prepare data
 
@@ -187,6 +189,20 @@ To deploy manually: push the repository to a private/public Git remote as approp
 
 No score is invented. See [`reports/report.md`](reports/report.md) for the current technical report and outstanding work.
 
+### Agent-only authored-case check
+
+The deterministic offline fallback was run against the hand-written cases in [`tools/evaluate_agent.py`](tools/evaluate_agent.py). The saved [`agent evaluation run`](reports/runs/agent_eval_20261013T164559Z.json) records 25 exact sentence matches in 25 eligible text cases, no unsupported content words flagged by the lexical rule on those examples, and repeat-request precision of 1.0 on the authored low-confidence cases. This is a narrow code-path check—not sign-recognition accuracy, a human evaluation of ISL/English quality, or an LLM-provider evaluation. The lexical guard cannot prove semantic faithfulness.
+
+### Ablation status
+
+| Ablation dimension | Compared settings | Status |
+| --- | --- | --- |
+| Input landmarks | Wrist/palm-normalized hands vs. pose + both hands | Implemented; no real runs |
+| Augmentation | Coordinate noise/hand dropout on vs. off | Implemented; no real runs |
+| Temporal sampling | Sequence lengths 16, 32, and 48 | Implemented; no real runs |
+| Model family | BiLSTM, BiGRU, Transformer, and TCN | Implemented; no real runs |
+| Seeds | Three default seeds per configuration | Implemented; no real runs |
+
 ## Limitations and future work
 
 - Acquire appropriately licensed ISL video/image data, verify mappings with fluent signers, and preserve signer identities for strict generalization tests.
@@ -194,3 +210,38 @@ No score is invented. See [`reports/report.md`](reports/report.md) for the curre
 - Domain shift from WLASL/ASL, background, camera viewpoint, hand occlusion, skin/lighting conditions, and signer variation can cause errors.
 - Expand signer-diverse capture, calibrate confidence on held-out signers, quantify word-error rates and end-to-end latency, and conduct usability/consent review with the ISL community.
 - Add explicit phrase-level datasets and a reviewed ISL-to-English language layer rather than treating gloss concatenation as translation.
+
+## Ethics, consent, and privacy
+
+- Obtain informed consent for every recorded signer and separately for any public release, hosted processing, and derived-weight distribution. Do not capture bystanders. Use pseudonymous signer IDs and keep the identity key offline.
+- Raw clips may contain biometric and personally identifying information. This project ignores raw data in Git; keep it access-controlled and delete temporary uploads according to a documented retention policy.
+- The optional LLM receives recognized glosses and sentence prompts. Review provider privacy/retention terms before sending sensitive signs. Agent traces are local and ignored by Git because even gloss streams may be sensitive.
+- Treat all outputs as uncertain. Use a qualified interpreter for consequential communication, and involve Deaf ISL users in vocabulary, evaluation, and product decisions.
+
+## Reproduce in five steps
+
+These commands assume you have already verified the vocabulary with a fluent signer and collected real, consenting clips from at least three signer IDs. They do not produce a valid model if the data/license/signer requirements are unmet.
+
+```powershell
+# 1. Install in a supported Python environment.
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[app,train,dev]"
+
+# 2. Collect multiple labels/signers interactively; review/delete each clip.
+python -m tools.record_clips --signer-id signer_01
+
+# 3. Validate all media and signer splits, then extract all landmarks.
+python -m tools.make_manifest --clips data/raw/clips.csv
+python -m src.isl_recognition.data --source-csv data/raw/clips.csv --output-dir data/processed
+
+# 4. Run the real four-model, three-seed, modality/augmentation/length grid.
+python -m src.isl_recognition.train_landmarks --manifest data/processed/manifest.csv --architectures lstm gru transformer tcn --seeds 42 43 44 --modalities hands hands_pose --augmentations on off --sequence-lengths 16 32 48 --epochs 40
+
+# 5. Launch the webcam/upload application.
+streamlit run app/streamlit_app.py
+```
+
+The complete grid is intentionally substantial. When local training dependencies or hardware are unavailable, use [`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb). It uploads no synthetic training data.
+
+**Demo GIF placeholder:** `reports/demo.gif` — not recorded because a trained checkpoint and consented camera capture are not available in this environment.
