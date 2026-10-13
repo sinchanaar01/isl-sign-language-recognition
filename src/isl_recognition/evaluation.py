@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+import json
 from pathlib import Path
 
 
@@ -81,8 +82,45 @@ def save_evaluation_artifacts(
     plt.close(figure)
 
     metrics_path = output / f"{prefix}_metrics.json"
-    import json
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    confused = sorted(
+        metrics["misclassified_pairs"],
+        key=lambda item: item["count"],
+        reverse=True,
+    )[:5]
+    if confused:
+        lines = [
+            f"# Error analysis: {prefix}",
+            "",
+            "Top class confusions measured on the held-out test predictions:",
+            "",
+            "| Actual | Predicted | Count |",
+            "| --- | --- | ---: |",
+        ]
+        lines.extend(
+            f"| {item['actual']} | {item['predicted']} | {item['count']} |"
+            for item in confused
+        )
+        lines += [
+            "",
+            "Counts come directly from this run's confusion matrix. Inspect the clips "
+            "for these pairs and determine whether errors reflect visual similarity, "
+            "label ambiguity, or insufficient signer coverage before drawing causal "
+            "conclusions.",
+            "",
+        ]
+    else:
+        lines = [
+            f"# Error analysis: {prefix}",
+            "",
+            "No off-diagonal errors were observed in this held-out run. This does not "
+            "establish broad generalization; inspect the sample size and signer "
+            "coverage in the corresponding run record.",
+            "",
+        ]
+    (output / f"{prefix}_error_analysis.md").write_text(
+        "\n".join(lines), encoding="utf-8"
+    )
     return metrics
 
 

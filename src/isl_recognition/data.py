@@ -106,6 +106,7 @@ def prepare_manifest(
                 name = f"clip_{row_number:06d}.npy"
                 np.save(output / name, sequence, allow_pickle=False)
                 records.append({
+                    "video_path": str(video_path.resolve()),
                     "landmarks_path": name,
                     "label": row["label"].strip(),
                     "signer_id": row["signer_id"].strip(),
@@ -127,7 +128,7 @@ def prepare_manifest(
     manifest = output / "manifest.csv"
     with manifest.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=[
-            "landmarks_path", "label", "signer_id", "split"
+            "video_path", "landmarks_path", "label", "signer_id", "split"
         ])
         writer.writeheader()
         for record, split in zip(records, splits):
@@ -153,4 +154,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

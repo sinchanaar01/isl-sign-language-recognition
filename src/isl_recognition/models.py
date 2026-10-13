@@ -23,8 +23,9 @@ def build_landmark_model(architecture: str, num_classes: int, input_size: int = 
                                            dropout=0.2, bidirectional=True)
                 self.head = nn.Sequential(nn.Dropout(0.3), nn.Linear(256, num_classes))
 
-            def forward(self, inputs):
-                _, hidden = self.recurrent(inputs)
+            def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+                _, state = self.recurrent(inputs)
+                hidden = state[0] if isinstance(state, tuple) else state
                 return self.head(torch.cat((hidden[-2], hidden[-1]), dim=1))
 
         return RecurrentClassifier()
@@ -47,7 +48,7 @@ def build_landmark_model(architecture: str, num_classes: int, input_size: int = 
                 self.encoder = nn.TransformerEncoder(layer, num_layers=2)
                 self.head = nn.Sequential(nn.LayerNorm(128), nn.Linear(128, num_classes))
 
-            def forward(self, inputs):
+            def forward(self, inputs: torch.Tensor) -> torch.Tensor:
                 if inputs.size(1) > self.position_embedding.size(1):
                     raise ValueError("Transformer sequence length exceeds 128 frames")
                 projected = self.input_projection(inputs)
@@ -57,6 +58,52 @@ def build_landmark_model(architecture: str, num_classes: int, input_size: int = 
                 return self.head(encoded.mean(dim=1))
 
         return LandmarkTransformer()
+
+    if architecture == "tcn":
+        class TemporalBlock(nn.Module):
+            def __init__(self, in_channels: int, out_channels: int, dilation: int) -> None:
+                super().__init__()
+                padding = dilation
+                self.convolution = nn.Sequential(
+                    nn.Conv1d(
+                        in_channels, out_channels, kernel_size=3,
+                        padding=padding, dilation=dilation,
+                    ),
+                    nn.BatchNorm1d(out_channels),
+                    nn.ReLU(),
+                    nn.Dropout(0.2),
+                    nn.Conv1d(
+                        out_channels, out_channels, kernel_size=3,
+                        padding=padding, dilation=dilation,
+                    ),
+                    nn.BatchNorm1d(out_channels),
+                )
+                self.residual = (
+                    nn.Identity() if in_channels == out_channels
+                    else nn.Conv1d(in_channels, out_channels, kernel_size=1)
+                )
+
+            def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+                return torch.relu(self.convolution(inputs) + self.residual(inputs))
+
+        class TemporalConvClassifier(nn.Module):
+            def __init__(self) -> None:
+                super().__init__()
+                self.encoder = nn.Sequential(
+                    TemporalBlock(input_size, 128, dilation=1),
+                    TemporalBlock(128, 128, dilation=2),
+                    TemporalBlock(128, 128, dilation=4),
+                )
+                self.head = nn.Sequential(
+                    nn.Dropout(0.3),
+                    nn.Linear(128, num_classes),
+                )
+
+            def forward(self, inputs):
+                encoded = self.encoder(inputs.transpose(1, 2))
+                return self.head(encoded.mean(dim=2))
+
+        return TemporalConvClassifier()
 
     raise ValueError(f"Unsupported landmark architecture: {architecture}")
 

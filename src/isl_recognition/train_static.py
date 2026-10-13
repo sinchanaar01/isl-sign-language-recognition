@@ -1,16 +1,50 @@
-"""Fine-tune MobileNetV2 for static sign images stored in ImageFolder layout."""
+"""Train three-seed MobileNetV2 baseline on signer-separated static images."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import random
+import statistics
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
 from .evaluation import measure_model_latency, save_evaluation_artifacts
 from .models import build_mobilenet_v2
+
+
+def validate_signer_separation(*datasets: Any) -> dict[str, set[str]]:
+    """Require filenames named SIGNER_ID__sample.ext and reject split leakage."""
+    split_signers: dict[str, set[str]] = {}
+    for split, dataset in zip(("train", "val", "test"), datasets):
+        if not dataset.samples:
+            raise ValueError(f"{split} image split is empty")
+        signers: set[str] = set()
+        for filename, _ in dataset.samples:
+            stem = Path(filename).stem
+            if "__" not in stem:
+                raise ValueError(
+                    f"Image {filename} needs signer-prefixed filename "
+                    "`SIGNER_ID__sample.ext` to verify a signer-independent split."
+                )
+            signer = stem.split("__", maxsplit=1)[0]
+            if not signer:
+                raise ValueError(f"Image {filename} has an empty signer ID prefix")
+            signers.add(signer)
+        split_signers[split] = signers
+    names = tuple(split_signers)
+    for index, first in enumerate(names):
+        for second in names[index + 1:]:
+            overlap = split_signers[first] & split_signers[second]
+            if overlap:
+                raise ValueError(
+                    f"Signer leakage between {first} and {second}: {sorted(overlap)}"
+                )
+    return split_signers
 
 
 def train_static(
@@ -20,7 +54,8 @@ def train_static(
     epochs: int = 20,
     batch_size: int = 32,
     seed: int = 42,
-) -> dict:
+) -> dict[str, Any]:
+    """Train one deterministic MobileNetV2 run."""
     import mlflow
     import torch
     from torch import nn
@@ -43,21 +78,25 @@ def train_static(
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])
-    test_transform = transforms.Compose([
+    evaluation_transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])
     train_data = datasets.ImageFolder(root / "train", transform=train_transform)
-    val_data = datasets.ImageFolder(root / "val", transform=test_transform)
-    test_data = datasets.ImageFolder(root / "test", transform=test_transform)
+    val_data = datasets.ImageFolder(root / "val", transform=evaluation_transform)
+    test_data = datasets.ImageFolder(root / "test", transform=evaluation_transform)
     class_names = train_data.classes
     if len(class_names) < 2:
         raise ValueError("Static image training requires at least two class folders")
-    if not train_data or not val_data or not test_data:
-        raise ValueError("Train, val, and test image folders must each contain images")
-    if any(dataset.class_to_idx != train_data.class_to_idx for dataset in (val_data, test_data)):
-        raise ValueError("Train, val, and test folders must contain the same class directories")
+    if any(
+        dataset.class_to_idx != train_data.class_to_idx
+        for dataset in (val_data, test_data)
+    ):
+        raise ValueError(
+            "Train, val, and test folders must contain exactly the same class folders"
+        )
+    split_signers = validate_signer_separation(train_data, val_data, test_data)
     if epochs < 1 or batch_size < 1:
         raise ValueError("epochs and batch_size must be positive")
 
@@ -74,10 +113,14 @@ def train_static(
     criterion = nn.CrossEntropyLoss()
     output = Path(output_directory)
     output.mkdir(parents=True, exist_ok=True)
-    checkpoint_path = output / "mobilenet_v2_static.pt"
+    reports = Path(reports_directory)
+    reports.mkdir(parents=True, exist_ok=True)
+    run_id = uuid.uuid4().hex
+    checkpoint_path = output / f"mobilenet_v2_seed{seed}.pt"
+    metrics_prefix = f"mobilenet_v2_seed{seed}"
     best_accuracy = -1.0
     mlflow.set_experiment("isl-static-model-comparison")
-    with mlflow.start_run(run_name="mobilenet_v2"):
+    with mlflow.start_run(run_name=metrics_prefix):
         mlflow.log_params({
             "architecture": "mobilenet_v2",
             "input_size": 224,
@@ -85,6 +128,10 @@ def train_static(
             "batch_size": batch_size,
             "seed": seed,
             "device": str(device),
+            "signer_count": len(set.union(*split_signers.values())),
+            "train_samples": len(train_data),
+            "val_samples": len(val_data),
+            "test_samples": len(test_data),
         })
         for epoch in range(epochs):
             model.train()
@@ -99,6 +146,7 @@ def train_static(
                 train_loss += loss.item() * len(labels)
                 train_correct += (logits.argmax(dim=1) == labels).sum().item()
                 train_total += len(labels)
+
             model.eval()
             val_loss = val_correct = val_total = 0
             with torch.inference_mode():
@@ -119,7 +167,7 @@ def train_static(
                 step=epoch,
             )
             print(
-                f"MobileNetV2 epoch {epoch + 1}/{epochs}: "
+                f"{metrics_prefix} epoch {epoch + 1}/{epochs}: "
                 f"train_acc={train_correct / train_total:.4f} "
                 f"val_acc={val_accuracy:.4f}"
             )
@@ -150,20 +198,81 @@ def train_static(
                 targets.extend(labels.tolist())
         latency = measure_model_latency(model, sample, device)
         metrics = save_evaluation_artifacts(
-            targets, predictions, class_names, reports_directory, "mobilenet_v2", latency
+            targets, predictions, class_names, reports, metrics_prefix, latency
         )
+        run_record = {
+            "run_id": run_id,
+            "completed_at_utc": datetime.now(timezone.utc).isoformat(),
+            "status": "completed_real_training_run",
+            "architecture": "mobilenet_v2",
+            "seed": seed,
+            "device": str(device),
+            "class_names": class_names,
+            "signer_count": len(set.union(*split_signers.values())),
+            "split_signer_counts": {
+                split: len(signers) for split, signers in split_signers.items()
+            },
+            "samples": {
+                "train": len(train_data), "val": len(val_data), "test": len(test_data)
+            },
+            "best_validation_accuracy": best_accuracy,
+            "test_metrics": metrics,
+            "model_only_latency_ms": latency,
+            "checkpoint": str(checkpoint_path),
+        }
+        run_path = reports / "runs" / f"{run_id}.json"
+        run_path.parent.mkdir(parents=True, exist_ok=True)
+        run_path.write_text(json.dumps(run_record, indent=2) + "\n", encoding="utf-8")
         mlflow.log_metrics({
             "test_accuracy": metrics["accuracy"],
-            "test_mean_inference_latency_ms": latency,
+            "test_macro_f1": metrics["per_class"]["macro avg"]["f1-score"],
+            "model_only_latency_ms": latency,
         })
-        mlflow.log_artifact(str(checkpoint_path))
-        mlflow.log_artifact(str(Path(reports_directory) / "mobilenet_v2_metrics.json"))
-        mlflow.log_artifact(str(Path(reports_directory) / "mobilenet_v2_confusion_matrix.png"))
+        for artifact in (
+            checkpoint_path,
+            reports / f"{metrics_prefix}_metrics.json",
+            reports / f"{metrics_prefix}_confusion_matrix.png",
+            reports / f"{metrics_prefix}_error_analysis.md",
+            run_path,
+        ):
+            mlflow.log_artifact(str(artifact))
         print(
-            f"MobileNetV2 held-out test accuracy={metrics['accuracy']:.4f}; "
-            f"mean latency={latency:.2f} ms; checkpoint={checkpoint_path}"
+            f"{metrics_prefix}: test_accuracy={metrics['accuracy']:.4f}; "
+            f"macro_f1={metrics['per_class']['macro avg']['f1-score']:.4f}; "
+            f"model_latency_ms={latency:.2f}"
         )
-        return metrics
+        return run_record
+
+
+def train_static_seeds(
+    data_directory: str | Path,
+    seeds: list[int],
+    epochs: int,
+    batch_size: int,
+) -> dict[str, Any]:
+    if len(seeds) < 3 or len(set(seeds)) != len(seeds):
+        raise ValueError("Provide at least three distinct seeds")
+    runs = [
+        train_static(data_directory, epochs=epochs, batch_size=batch_size, seed=seed)
+        for seed in seeds
+    ]
+    accuracies = [run["test_metrics"]["accuracy"] for run in runs]
+    macro_f1 = [
+        run["test_metrics"]["per_class"]["macro avg"]["f1-score"] for run in runs
+    ]
+    summary = {
+        "kind": "real_training_runs_only",
+        "run_ids": [run["run_id"] for run in runs],
+        "seeds": seeds,
+        "accuracy_mean": statistics.mean(accuracies),
+        "accuracy_population_std": statistics.pstdev(accuracies),
+        "macro_f1_mean": statistics.mean(macro_f1),
+        "macro_f1_population_std": statistics.pstdev(macro_f1),
+    }
+    path = Path("reports/runs/mobilenet_v2_seed_summary.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    return summary
 
 
 def main() -> None:
@@ -171,14 +280,14 @@ def main() -> None:
     parser.add_argument("--data-dir", default="data/raw/static")
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44])
     args = parser.parse_args()
-    metrics = train_static(
-        args.data_dir, epochs=args.epochs, batch_size=args.batch_size, seed=args.seed
+    summary = train_static_seeds(
+        args.data_dir, args.seeds, args.epochs, args.batch_size
     )
-    Path("reports").mkdir(exist_ok=True)
-    Path("reports/mobilenet_v2_summary.json").write_text(
-        json.dumps(metrics, indent=2), encoding="utf-8"
+    Path("reports/runs").mkdir(parents=True, exist_ok=True)
+    Path("reports/runs/mobilenet_v2_seed_summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
     )
 
 

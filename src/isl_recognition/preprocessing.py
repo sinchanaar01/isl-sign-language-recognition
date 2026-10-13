@@ -11,6 +11,28 @@ POSE_XYZ = 33 * 3
 POSE_VISIBILITY = 33
 HAND_XYZ = 21 * 3
 FEATURES_PER_FRAME = POSE_XYZ + POSE_VISIBILITY + 2 * HAND_XYZ
+FEATURES_HANDS_ONLY = 2 * HAND_XYZ
+
+
+def select_modality(sequence: np.ndarray, modality: str) -> np.ndarray:
+    """Select hand-only or pose-plus-hand features from normalized sequences."""
+    values = np.asarray(sequence, dtype=np.float32)
+    if values.ndim < 1 or values.shape[-1] != FEATURES_PER_FRAME:
+        raise ValueError(f"Expected last dimension {FEATURES_PER_FRAME}, got {values.shape}")
+    if modality == "hands_pose":
+        return values.copy()
+    if modality == "hands":
+        start = POSE_XYZ + POSE_VISIBILITY
+        hands = values[..., start:].reshape(*values.shape[:-1], 2, 21, 3).copy()
+        wrist = hands[..., :1, :].copy()
+        hands -= wrist
+        scale = np.linalg.norm(
+            hands[..., 9, :2], axis=-1, keepdims=True
+        )
+        scale = np.where(scale < 1e-6, 1.0, scale)
+        hands /= scale[..., None]
+        return hands.reshape(*values.shape[:-1], FEATURES_HANDS_ONLY)
+    raise ValueError(f"Unsupported modality {modality!r}; use 'hands' or 'hands_pose'")
 
 
 def normalize_frame(frame: Sequence[float]) -> np.ndarray:
@@ -143,4 +165,3 @@ def signer_independent_split(
         )
         assignment[donor] = name
     return np.asarray([assignment[signer] for signer in signer_ids])
-

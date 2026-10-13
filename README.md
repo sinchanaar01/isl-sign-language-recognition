@@ -33,7 +33,7 @@ flowchart LR
     Train --> Track[MLflow + metrics + confusion matrix]
 ```
 
-**Dynamic model path:** MediaPipe Holistic emits 33 pose landmarks (xyz + visibility) and two 21-point hand landmarks (xyz), or 258 float features per frame. Pose and hands are centered on the shoulder midpoint and scaled by shoulder width. Clips are uniformly resampled to a fixed frame count; seeded coordinate noise and hand dropout augment training only. Signer IDs are kept disjoint across train/validation/test.
+**Dynamic model path:** MediaPipe Holistic emits pose and both hand landmarks; pose+hands use 258 float features per frame. Clips are uniformly resampled to a configured sequence length; seeded coordinate noise and hand dropout augment training only. The hands-only ablation uses wrist-centered, palm-scaled hand landmarks and no pose input. Signer IDs are kept disjoint across train/validation/test.
 
 **Static comparison:** MobileNetV2 is fine-tuned on static images using the same signer-independent split discipline. Static and sequence models solve related but different tasks; compare their results only with an explicit modality caveat.
 
@@ -91,25 +91,27 @@ For a Kaggle corpus, identify and review its exact data card/license yourself, c
 kaggle datasets download -d OWNER/VERIFIED-DATASET-SLUG -p data/raw/kaggle --unzip
 ```
 
-For static images, arrange signer-independent samples as `data/raw/static/{train,val,test}/{class_name}/*`. Ensure each split uses distinct signers and contains every class. `ImageFolder` cannot infer or enforce signer separation.
+For static images, arrange samples as `data/raw/static/{train,val,test}/{class_name}/SIGNER_ID__sample.jpg`. The MobileNetV2 trainer requires this filename prefix and verifies signer identities are disjoint across all three splits. Every split must contain each class.
 
 ## Train, compare, evaluate
 
-Train all three temporal architectures. Defaults use a fixed seed, 32 frames, and validation-based checkpoint selection:
+Run the full temporal grid (four architectures, three seeds, two modalities, augmentation on/off, and three sequence lengths). This is a long training job; use the provided Colab notebook if local dependencies or compute are unavailable:
 
 ```powershell
-python -m src.isl_recognition.train_landmarks --manifest data/processed/manifest.csv --epochs 40
+python -m src.isl_recognition.train_landmarks --manifest data/processed/manifest.csv --architectures lstm gru transformer tcn --seeds 42 43 44 --modalities hands hands_pose --augmentations on off --sequence-lengths 16 32 48 --epochs 40
 ```
 
-The best checkpoint is selected by **validation accuracy**, not test performance, and saved as `models/best_landmark.pt` for the webcam demo. Per-architecture checkpoints and confusion-matrix/metrics artifacts are saved under `models/` and `reports/`. MLflow logs parameters, learning curves, checkpoint artifacts, test accuracy, and measured inference latency locally under `mlruns/`.
+The best checkpoint is selected by **validation accuracy**, not test performance, and saved as `models/best_landmark.pt` with `models/class_map.json` and `models/MODEL_CARD.md`. Every real run writes a JSON record under `reports/runs/`, per-class metrics, confusion matrix, and top-confusion error analysis under `reports/`, and a local MLflow record under `mlruns/`. `reports/ablation_table.csv` is produced only after actual runs finish and aggregates the observed seeds.
 
-Train the static MobileNetV2 baseline separately:
+Train the static MobileNetV2 baseline separately (each image filename must encode its pseudonymous signer ID):
 
 ```powershell
-python -m src.isl_recognition.train_static --data-dir data/raw/static --epochs 20
+python -m src.isl_recognition.train_static --data-dir data/raw/static --seeds 42 43 44 --epochs 20
 ```
 
-Reports include accuracy, per-class precision/recall/F1, confusion matrix, and average model-forward latency on the recorded device. Model-forward latency excludes camera capture, landmark extraction, network calls, and speech synthesis. Analyze misclassifications from the confusion matrix and class report; do not compare runs across different splits/vocabularies as if equivalent.
+Reports include accuracy, macro-F1, per-class precision/recall/F1, confusion matrix, top-five confusion analysis, and model-forward latency/device. Landmark training also measures end-to-end latency on a test clip including MediaPipe extraction if the source video is available; otherwise the run log records why it was not measured. Model-only latency excludes camera capture, network calls, and speech synthesis. Do not compare runs across different splits/vocabularies as if equivalent.
+
+If there is no supported local GPU/training stack, use [`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb) in Colab. Set its repository URL, mount private Drive containing the real consented clips, then run the cells in order. It does not generate synthetic training examples or metrics.
 
 ## Run the webcam app
 
@@ -158,6 +160,7 @@ To deploy manually: push the repository to a private/public Git remote as approp
 | LSTM landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
 | GRU landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
 | Transformer landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
+| TCN landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
 
 No score is invented. See [`reports/report.md`](reports/report.md) for the current technical report and outstanding work.
 

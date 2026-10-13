@@ -29,7 +29,9 @@ class PredictionSmoother:
         return label, averaged[label]
 
 
-def load_landmark_model(checkpoint_path: str) -> tuple[Any, list[str], int]:
+def load_landmark_model(
+    checkpoint_path: str,
+) -> tuple[Any, list[str], int, str]:
     """Load a trained PyTorch landmark model; imports torch only when requested."""
     try:
         import torch
@@ -48,5 +50,9 @@ def load_landmark_model(checkpoint_path: str) -> tuple[Any, list[str], int]:
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
     classes = [label for label, _ in sorted(class_to_idx.items(), key=lambda item: item[1])]
-    return model, classes, checkpoint["sequence_length"]
-
+    return (
+        model,
+        classes,
+        checkpoint["sequence_length"],
+        checkpoint.get("modality", "hands_pose"),
+    )
