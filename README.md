@@ -1,3 +1,13 @@
+---
+title: Real-Time Indian Sign Language Recognition with an Agentic Sentence Layer
+emoji: 🤟
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Real-Time Indian Sign Language Recognition with an Agentic Sentence Layer
 
 A research prototype for recognizing short, isolated sign clips from a webcam and turning a stream of recognized glosses into English text and speech. It provides an end-to-end data, training, evaluation, and demo pipeline; it does **not** include a pretrained model.

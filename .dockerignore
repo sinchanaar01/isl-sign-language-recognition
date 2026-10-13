@@ -1,0 +1,13 @@
+.git
+.venv
+.venv*
+__pycache__
+**/__pycache__
+*.py[cod]
+.pytest_cache
+data/raw
+data/processed
+mlruns
+wandb
+reports/agent_traces
+reports/runs
