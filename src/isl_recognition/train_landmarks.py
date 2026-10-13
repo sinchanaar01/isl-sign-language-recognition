@@ -24,7 +24,6 @@ from .preprocessing import (
     select_modality,
 )
 
-
 ARCHITECTURES = ("lstm", "gru", "transformer", "tcn")
 MODALITIES = ("hands", "hands_pose")
 
@@ -131,9 +130,7 @@ def train_architecture(
     )
     val_loader = DataLoader(val_data, batch_size=batch_size)
     test_loader = DataLoader(test_data, batch_size=batch_size)
-    input_size = (
-        FEATURES_HANDS_ONLY if modality == "hands" else FEATURES_PER_FRAME
-    )
+    input_size = FEATURES_HANDS_ONLY if modality == "hands" else FEATURES_PER_FRAME
     model = build_landmark_model(architecture, len(class_names), input_size).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
     criterion = nn.CrossEntropyLoss()
@@ -153,22 +150,24 @@ def train_architecture(
 
     mlflow.set_experiment("isl-landmark-model-comparison")
     with mlflow.start_run(run_name=config_slug):
-        mlflow.log_params({
-            "architecture": architecture,
-            "sequence_length": sequence_length,
-            "modality": modality,
-            "input_size": input_size,
-            "augmentation": use_augmentation,
-            "epochs": epochs,
-            "batch_size": batch_size,
-            "seed": seed,
-            "device": str(device),
-            "signer_count": len({row["signer_id"] for row in records}),
-            "class_count": len(class_names),
-            "train_samples": len(train_data),
-            "val_samples": len(val_data),
-            "test_samples": len(test_data),
-        })
+        mlflow.log_params(
+            {
+                "architecture": architecture,
+                "sequence_length": sequence_length,
+                "modality": modality,
+                "input_size": input_size,
+                "augmentation": use_augmentation,
+                "epochs": epochs,
+                "batch_size": batch_size,
+                "seed": seed,
+                "device": str(device),
+                "signer_count": len({row["signer_id"] for row in records}),
+                "class_count": len(class_names),
+                "train_samples": len(train_data),
+                "val_samples": len(val_data),
+                "test_samples": len(test_data),
+            }
+        )
         for epoch in range(epochs):
             model.train()
             train_loss = train_correct = train_total = 0
@@ -189,7 +188,9 @@ def train_architecture(
             val_loss = 0.0
             with torch.inference_mode():
                 for inputs, labels in val_loader:
-                    inputs, labels = inputs.to(device), labels.to(device, dtype=torch.long)
+                    inputs, labels = inputs.to(device), labels.to(
+                        device, dtype=torch.long
+                    )
                     logits = model(inputs)
                     val_loss += criterion(logits, labels).item() * len(labels)
                     val_correct += (logits.argmax(dim=1) == labels).sum().item()
@@ -246,7 +247,8 @@ def train_architecture(
         end_to_end = measure_video_pipeline_latency(
             next(
                 (
-                    row["video_path"] for row in records
+                    row["video_path"]
+                    for row in records
                     if row["split"] == "test" and row.get("video_path")
                 ),
                 None,
@@ -271,7 +273,9 @@ def train_architecture(
             "samples": {
                 split: len(dataset)
                 for split, dataset in (
-                    ("train", train_data), ("val", val_data), ("test", test_data)
+                    ("train", train_data),
+                    ("val", val_data),
+                    ("test", test_data),
                 )
             },
             "best_validation_accuracy": best_accuracy,
@@ -283,11 +287,13 @@ def train_architecture(
         }
         run_path = run_log_directory / f"{run_id}.json"
         run_path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-        mlflow.log_metrics({
-            "test_accuracy": metrics["accuracy"],
-            "test_macro_f1": metrics["per_class"]["macro avg"]["f1-score"],
-            "model_only_latency_ms": latency,
-        })
+        mlflow.log_metrics(
+            {
+                "test_accuracy": metrics["accuracy"],
+                "test_macro_f1": metrics["per_class"]["macro avg"]["f1-score"],
+                "model_only_latency_ms": latency,
+            }
+        )
         mlflow.log_artifact(str(checkpoint_path))
         mlflow.log_artifact(str(reports / f"{prefix}_metrics.json"))
         mlflow.log_artifact(str(reports / f"{prefix}_confusion_matrix.png"))
@@ -315,7 +321,9 @@ def measure_video_pipeline_latency(
             "reason": "test manifest has no original video_path",
         }
     import time
+
     import torch
+
     from .data import extract_video_landmarks
 
     started = time.perf_counter()
@@ -377,7 +385,8 @@ def run_grid(
                             import torch
 
                             checkpoint = torch.load(
-                                result["checkpoint"], map_location="cpu",
+                                result["checkpoint"],
+                                map_location="cpu",
                                 weights_only=True,
                             )
                             Path("models").mkdir(exist_ok=True)
@@ -414,18 +423,20 @@ def summarize_trials(results: list[dict[str, Any]]) -> dict[str, Any]:
             item["test_metrics"]["per_class"]["macro avg"]["f1-score"]
             for item in trials
         ]
-        rows.append({
-            "architecture": key[0],
-            "modality": key[1],
-            "augmentation": key[2],
-            "sequence_length": key[3],
-            "seeds": [item["seed"] for item in trials],
-            "accuracy_mean": statistics.mean(accuracies),
-            "accuracy_population_std": statistics.pstdev(accuracies),
-            "macro_f1_mean": statistics.mean(macro_f1s),
-            "macro_f1_population_std": statistics.pstdev(macro_f1s),
-            "run_ids": [item["run_id"] for item in trials],
-        })
+        rows.append(
+            {
+                "architecture": key[0],
+                "modality": key[1],
+                "augmentation": key[2],
+                "sequence_length": key[3],
+                "seeds": [item["seed"] for item in trials],
+                "accuracy_mean": statistics.mean(accuracies),
+                "accuracy_population_std": statistics.pstdev(accuracies),
+                "macro_f1_mean": statistics.mean(macro_f1s),
+                "macro_f1_population_std": statistics.pstdev(macro_f1s),
+                "run_ids": [item["run_id"] for item in trials],
+            }
+        )
     return {
         "kind": "real_training_runs_only",
         "run_count": len(results),
@@ -435,17 +446,29 @@ def summarize_trials(results: list[dict[str, Any]]) -> dict[str, Any]:
 
 def write_ablation_table(summary: dict[str, Any], destination: Path) -> None:
     fields = (
-        "architecture", "modality", "augmentation", "sequence_length",
-        "accuracy_mean", "accuracy_population_std", "macro_f1_mean",
-        "macro_f1_population_std", "seeds", "run_ids",
+        "architecture",
+        "modality",
+        "augmentation",
+        "sequence_length",
+        "accuracy_mean",
+        "accuracy_population_std",
+        "macro_f1_mean",
+        "macro_f1_population_std",
+        "seeds",
+        "run_ids",
     )
     destination.parent.mkdir(parents=True, exist_ok=True)
     with destination.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for row in summary["configurations"]:
-            writer.writerow({**row, "seeds": json.dumps(row["seeds"]),
-                             "run_ids": json.dumps(row["run_ids"])})
+            writer.writerow(
+                {
+                    **row,
+                    "seeds": json.dumps(row["seeds"]),
+                    "run_ids": json.dumps(row["run_ids"]),
+                }
+            )
 
 
 def write_model_card(result: dict[str, Any]) -> None:
@@ -490,9 +513,7 @@ def main() -> None:
     parser.add_argument(
         "--augmentations", nargs="+", choices=("on", "off"), default=["on", "off"]
     )
-    parser.add_argument(
-        "--sequence-lengths", nargs="+", type=int, default=[16, 32, 48]
-    )
+    parser.add_argument("--sequence-lengths", nargs="+", type=int, default=[16, 32, 48])
     parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--batch-size", type=int, default=32)
     args = parser.parse_args()

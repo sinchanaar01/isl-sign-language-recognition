@@ -40,9 +40,7 @@ def create_manifest(
             f"No WLASL videos matching annotation IDs were found in {video_directory}"
         )
     counts = Counter(label for label, _, _ in found)
-    selected = {
-        label for label, _ in counts.most_common(max_classes)
-    }
+    selected = {label for label, _ in counts.most_common(max_classes)}
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     with output_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
@@ -72,4 +70,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -7,11 +7,14 @@ import csv
 from pathlib import Path
 
 import numpy as np
+from numpy.typing import NDArray
 
 from .preprocessing import FEATURES_PER_FRAME, normalize_frame
 
 
-def extract_video_landmarks(video_path: str | Path, max_frames: int = 96) -> np.ndarray:
+def extract_video_landmarks(
+    video_path: str | Path, max_frames: int = 96
+) -> NDArray[np.float32]:
     """Extract normalized Holistic pose/hand landmarks from one video."""
     try:
         import cv2
@@ -53,8 +56,10 @@ def extract_video_landmarks(video_path: str | Path, max_frames: int = 96) -> np.
                 pose_offset = 0
                 if results.pose_landmarks:
                     for index, landmark in enumerate(results.pose_landmarks.landmark):
-                        frame[pose_offset + index * 3:pose_offset + index * 3 + 3] = (
-                            landmark.x, landmark.y, landmark.z
+                        frame[pose_offset + index * 3 : pose_offset + index * 3 + 3] = (
+                            landmark.x,
+                            landmark.y,
+                            landmark.z,
                         )
                         frame[99 + index] = landmark.visibility
                 hand_offset = 132
@@ -64,8 +69,10 @@ def extract_video_landmarks(video_path: str | Path, max_frames: int = 96) -> np.
                 ):
                     if hand_landmarks:
                         for index, landmark in enumerate(hand_landmarks.landmark):
-                            frame[start + index * 3:start + index * 3 + 3] = (
-                                landmark.x, landmark.y, landmark.z
+                            frame[start + index * 3 : start + index * 3 + 3] = (
+                                landmark.x,
+                                landmark.y,
+                                landmark.z,
                             )
                 frames.append(normalize_frame(frame))
     finally:
@@ -105,12 +112,14 @@ def prepare_manifest(
                 sequence = extract_video_landmarks(video_path, max_frames)
                 name = f"clip_{row_number:06d}.npy"
                 np.save(output / name, sequence, allow_pickle=False)
-                records.append({
-                    "video_path": str(video_path.resolve()),
-                    "landmarks_path": name,
-                    "label": row["label"].strip(),
-                    "signer_id": row["signer_id"].strip(),
-                })
+                records.append(
+                    {
+                        "video_path": str(video_path.resolve()),
+                        "landmarks_path": name,
+                        "label": row["label"].strip(),
+                        "signer_id": row["signer_id"].strip(),
+                    }
+                )
             except (OSError, ValueError, RuntimeError) as exc:
                 failures.append(f"row {row_number} ({video_path}): {exc}")
 
@@ -127,9 +136,10 @@ def prepare_manifest(
     )
     manifest = output / "manifest.csv"
     with manifest.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=[
-            "video_path", "landmarks_path", "label", "signer_id", "split"
-        ])
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=["video_path", "landmarks_path", "label", "signer_id", "split"],
+        )
         writer.writeheader()
         for record, split in zip(records, splits):
             writer.writerow({**record, "split": split})

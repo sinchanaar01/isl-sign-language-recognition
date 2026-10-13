@@ -95,9 +95,7 @@ class OpenAICompatibleProvider:
             "model": self.model,
             "temperature": 0,
             "messages": messages,
-            "tools": [
-                {"type": "function", "function": tool} for tool in tools
-            ],
+            "tools": [{"type": "function", "function": tool} for tool in tools],
             "tool_choice": "auto",
         }
         result = _request_json(
@@ -108,15 +106,19 @@ class OpenAICompatibleProvider:
         try:
             message = result["choices"][0]["message"]
         except (KeyError, IndexError, TypeError) as exc:
-            raise RuntimeError("OpenAI-compatible response has no assistant message") from exc
+            raise RuntimeError(
+                "OpenAI-compatible response has no assistant message"
+            ) from exc
         calls = []
         for call in message.get("tool_calls", []):
             try:
-                calls.append(ToolCall(
-                    name=call["function"]["name"],
-                    arguments=json.loads(call["function"]["arguments"]),
-                    call_id=call["id"],
-                ))
+                calls.append(
+                    ToolCall(
+                        name=call["function"]["name"],
+                        arguments=json.loads(call["function"]["arguments"]),
+                        call_id=call["id"],
+                    )
+                )
             except (KeyError, TypeError, json.JSONDecodeError) as exc:
                 raise RuntimeError("Malformed OpenAI-compatible tool call") from exc
         return AgentTurn(calls, message.get("content"))
@@ -162,9 +164,9 @@ class OpenAICompatibleProvider:
                     },
                     {
                         "role": "user",
-                        "content": json.dumps({
-                            "glosses": list(glosses), "sentence": sentence
-                        }),
+                        "content": json.dumps(
+                            {"glosses": list(glosses), "sentence": sentence}
+                        ),
                     },
                 ],
             },
@@ -223,8 +225,10 @@ class AnthropicProvider:
                     "tool_use_id": message["tool_call_id"],
                     "content": message["content"],
                 }
-                if converted and converted[-1]["role"] == "user" and isinstance(
-                    converted[-1]["content"], list
+                if (
+                    converted
+                    and converted[-1]["role"] == "user"
+                    and isinstance(converted[-1]["content"], list)
                 ):
                     converted[-1]["content"].append(result_block)
                 else:
@@ -234,18 +238,22 @@ class AnthropicProvider:
                 if message.get("content"):
                     blocks.append({"type": "text", "text": message["content"]})
                 for call in message["tool_calls"]:
-                    blocks.append({
-                        "type": "tool_use",
-                        "id": call["id"],
-                        "name": call["function"]["name"],
-                        "input": json.loads(call["function"]["arguments"]),
-                    })
+                    blocks.append(
+                        {
+                            "type": "tool_use",
+                            "id": call["id"],
+                            "name": call["function"]["name"],
+                            "input": json.loads(call["function"]["arguments"]),
+                        }
+                    )
                 converted.append({"role": "assistant", "content": blocks})
             else:
-                converted.append({
-                    "role": message["role"],
-                    "content": message.get("content", ""),
-                })
+                converted.append(
+                    {
+                        "role": message["role"],
+                        "content": message.get("content", ""),
+                    }
+                )
         return converted
 
     def complete(
@@ -280,11 +288,13 @@ class AnthropicProvider:
         final_text = []
         for block in blocks:
             if block.get("type") == "tool_use":
-                calls.append(ToolCall(
-                    name=block["name"],
-                    arguments=block["input"],
-                    call_id=block["id"],
-                ))
+                calls.append(
+                    ToolCall(
+                        name=block["name"],
+                        arguments=block["input"],
+                        call_id=block["id"],
+                    )
+                )
             elif block.get("type") == "text":
                 final_text.append(block.get("text", ""))
         text = "\n".join(value for value in final_text if value).strip()
@@ -316,12 +326,14 @@ class AnthropicProvider:
                     'Return only {"supported":true} or {"supported":false}. '
                     "Grammar words may be added; any unsupported content word means false."
                 ),
-                "messages": [{
-                    "role": "user",
-                    "content": json.dumps({
-                        "glosses": list(glosses), "sentence": sentence
-                    }),
-                }],
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": json.dumps(
+                            {"glosses": list(glosses), "sentence": sentence}
+                        ),
+                    }
+                ],
             },
             self._headers(),
         )
@@ -364,9 +376,7 @@ def provider_from_environment() -> ToolCallingProvider | None:
         return AnthropicProvider(
             api_key,
             os.getenv("ANTHROPIC_MODEL", "claude-3-5-haiku-latest"),
-            os.getenv(
-                "ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1/messages"
-            ),
+            os.getenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1/messages"),
         )
     raise ValueError("LLM_PROVIDER must be 'openai' or 'anthropic'")
 
@@ -382,17 +392,51 @@ def vocabulary_from_file(path: str | Path) -> dict[str, str]:
 
 
 _FUNCTION_WORDS = {
-    "a", "an", "the", "is", "am", "are", "was", "were", "be", "been",
-    "being", "do", "does", "did", "to", "from", "in", "on", "at", "for",
-    "of", "with", "and", "or", "but", "i", "you", "we", "they", "he",
-    "she", "it", "me", "us", "them", "my", "your", "our", "their",
+    "a",
+    "an",
+    "the",
+    "is",
+    "am",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "do",
+    "does",
+    "did",
+    "to",
+    "from",
+    "in",
+    "on",
+    "at",
+    "for",
+    "of",
+    "with",
+    "and",
+    "or",
+    "but",
+    "i",
+    "you",
+    "we",
+    "they",
+    "he",
+    "she",
+    "it",
+    "me",
+    "us",
+    "them",
+    "my",
+    "your",
+    "our",
+    "their",
 }
 
 
 def content_words(text: str) -> set[str]:
     words = {
-        match.casefold()
-        for match in re.findall(r"[A-Za-z]+(?:'[A-Za-z]+)?", text)
+        match.casefold() for match in re.findall(r"[A-Za-z]+(?:'[A-Za-z]+)?", text)
     }
     return words - _FUNCTION_WORDS
 
@@ -487,8 +531,10 @@ class AgentLoop:
             raise ValueError("max_steps must be between one and five")
         if not 0 <= confidence_threshold <= 1:
             raise ValueError("confidence_threshold must be between zero and one")
-        if any(not item.label.strip() or not 0 <= item.confidence <= 1
-               for item in sign_buffer):
+        if any(
+            not item.label.strip() or not 0 <= item.confidence <= 1
+            for item in sign_buffer
+        ):
             raise ValueError("Sign buffer has an empty label or invalid confidence")
         self.sign_buffer = list(sign_buffer)
         self.vocabulary = {key.casefold(): value for key, value in vocabulary.items()}
@@ -500,7 +546,9 @@ class AgentLoop:
         self.trace_directory = Path(trace_directory)
         self.trace_path = self.trace_directory / (
             datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-            + "_" + uuid.uuid4().hex + ".jsonl"
+            + "_"
+            + uuid.uuid4().hex
+            + ".jsonl"
         )
         self.steps = 0
         self.repeat_indices: list[int] = []
@@ -558,9 +606,7 @@ class AgentLoop:
             "category": category,
         }
 
-    def verify_sentence(
-        self, sentence: str, glosses: Sequence[str]
-    ) -> dict[str, Any]:
+    def verify_sentence(self, sentence: str, glosses: Sequence[str]) -> dict[str, Any]:
         unsupported = sorted(unsupported_content_words(sentence, glosses))
         if unsupported:
             self.verified_sentence = None
@@ -601,7 +647,8 @@ class AgentLoop:
             glosses = [str(item) for item in arguments["glosses"]]
             sentence = (
                 self.provider.draft_sentence(glosses)
-                if self.provider else self._fallback._fallback_sentence(glosses)
+                if self.provider
+                else self._fallback._fallback_sentence(glosses)
             )
             return {"sentence": sentence}
         if name == "verify_sentence":
@@ -670,7 +717,8 @@ class AgentLoop:
             return self._result("Start signing to build a sentence.")
 
         low_confidence = [
-            index for index, item in enumerate(self.sign_buffer)
+            index
+            for index, item in enumerate(self.sign_buffer)
             if item.confidence < self.confidence_threshold
         ]
         if low_confidence:
@@ -679,8 +727,7 @@ class AgentLoop:
                 "request_repeat", {"sign_index": index}, "preflight-repeat"
             )
             message = (
-                str(result["reason"])
-                if result else "Please repeat the uncertain sign."
+                str(result["reason"]) if result else "Please repeat the uncertain sign."
             )
             return self._result(message, needs_repeat=True, verified=False)
 
@@ -688,15 +735,17 @@ class AgentLoop:
             return self._run_offline()
 
         glosses = [item.label for item in self.sign_buffer]
-        messages: list[dict[str, Any]] = [{
-            "role": "user",
-            "content": (
-                "Recognized signs and confidences: "
-                + json.dumps(self.get_sign_buffer())
-                + ". Use the available tools to check the glosses, propose one "
-                "faithful sentence, verify it, and speak only after verification."
-            ),
-        }]
+        messages: list[dict[str, Any]] = [
+            {
+                "role": "user",
+                "content": (
+                    "Recognized signs and confidences: "
+                    + json.dumps(self.get_sign_buffer())
+                    + ". Use the available tools to check the glosses, propose one "
+                    "faithful sentence, verify it, and speak only after verification."
+                ),
+            }
+        ]
         for _ in range(self.max_steps):
             if self.steps >= self.max_steps:
                 break
@@ -712,11 +761,13 @@ class AgentLoop:
                 }
                 for call in turn.tool_calls
             ]
-            messages.append({
-                "role": "assistant",
-                "content": turn.final_text,
-                "tool_calls": assistant_calls,
-            })
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": turn.final_text,
+                    "tool_calls": assistant_calls,
+                }
+            )
             self._trace(
                 "provider_turn",
                 provider=self.provider.name,
@@ -736,22 +787,26 @@ class AgentLoop:
                         "verified-speech",
                     )
                     return self._result(turn.final_text)
-                messages.append({
-                    "role": "user",
-                    "content": "The proposed sentence failed verification. "
-                               "Use tools to produce a supported sentence.",
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": "The proposed sentence failed verification. "
+                        "Use tools to produce a supported sentence.",
+                    }
+                )
                 continue
             for call in turn.tool_calls:
                 result = self._call_tool(call.name, call.arguments, call.call_id)
                 if result is None:
                     break
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": call.call_id,
-                    "name": call.name,
-                    "content": json.dumps(result),
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call.call_id,
+                        "name": call.name,
+                        "content": json.dumps(result),
+                    }
+                )
                 if call.name == "request_repeat" and result.get("requested"):
                     return self._result(
                         result["reason"], needs_repeat=True, verified=False
@@ -782,8 +837,6 @@ class AgentLoop:
                 "offline-verification",
             )
             if verification and verification.get("supported"):
-                self._call_tool(
-                    "speak", {"sentence": sentence}, "offline-speech"
-                )
+                self._call_tool("speak", {"sentence": sentence}, "offline-speech")
                 return self._result(sentence)
         return self._fallback_result("offline step budget exhausted")

@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 SOURCE_URL = (
     "https://raw.githubusercontent.com/dxli94/WLASL/"
     "ac00e6be631c1a2a486621b65f202219f3964d6b/start_kit/WLASL_v0.3.json"
@@ -71,7 +70,9 @@ def audit_metadata(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--metadata", type=Path, default=Path("data/raw/WLASL_v0.3.json"))
+    parser.add_argument(
+        "--metadata", type=Path, default=Path("data/raw/WLASL_v0.3.json")
+    )
     parser.add_argument(
         "--output", type=Path, default=Path("reports/runs/wlasl_metadata_audit.json")
     )

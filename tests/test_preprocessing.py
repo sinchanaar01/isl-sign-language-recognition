@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-
 from src.isl_recognition.preprocessing import (
     FEATURES_PER_FRAME,
     POSE_XYZ,
@@ -16,8 +15,8 @@ from src.isl_recognition.preprocessing import (
 class PreprocessingTests(unittest.TestCase):
     def frame(self):
         frame = np.zeros(FEATURES_PER_FRAME, dtype=np.float32)
-        frame[11 * 3:11 * 3 + 3] = [0.4, 0.3, 0.1]
-        frame[12 * 3:12 * 3 + 3] = [0.6, 0.3, 0.1]
+        frame[11 * 3 : 11 * 3 + 3] = [0.4, 0.3, 0.1]
+        frame[12 * 3 : 12 * 3 + 3] = [0.6, 0.3, 0.1]
         frame[99 + 11] = 1
         frame[99 + 12] = 1
         frame[132:135] = [0.6, 0.4, 0.2]
@@ -76,9 +75,7 @@ class PreprocessingTests(unittest.TestCase):
 
     def test_hands_and_pose_preserves_all_features(self):
         sequence = np.zeros((3, FEATURES_PER_FRAME), dtype=np.float32)
-        np.testing.assert_array_equal(
-            select_modality(sequence, "hands_pose"), sequence
-        )
+        np.testing.assert_array_equal(select_modality(sequence, "hands_pose"), sequence)
 
     def test_hands_only_does_not_depend_on_pose_coordinates(self):
         first = np.zeros((1, FEATURES_PER_FRAME), dtype=np.float32)

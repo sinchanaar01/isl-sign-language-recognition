@@ -21,8 +21,12 @@ class SentenceAgentTests(unittest.TestCase):
 
     def test_fallback_suppresses_consecutive_duplicate(self):
         response = SentenceAgent(api_key="").generate(
-            [Prediction("I", 0.8), Prediction("I", 0.9), Prediction("want", 0.9),
-             Prediction("water", 0.9)]
+            [
+                Prediction("I", 0.8),
+                Prediction("I", 0.9),
+                Prediction("want", 0.9),
+                Prediction("water", 0.9),
+            ]
         )
         self.assertFalse(response.used_llm)
         self.assertEqual(response.text, "I want water.")

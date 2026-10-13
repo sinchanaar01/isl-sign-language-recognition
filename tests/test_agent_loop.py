@@ -1,5 +1,5 @@
-import json
 import io
+import json
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -50,9 +50,7 @@ class AgentLoopTests(unittest.TestCase):
     def make_loop(self, *args, **kwargs):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        return AgentLoop(
-            *args, trace_directory=temporary.name, **kwargs
-        )
+        return AgentLoop(*args, trace_directory=temporary.name, **kwargs)
 
     def test_low_confidence_requests_only_that_sign_again(self):
         requested = []
@@ -74,28 +72,51 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(result.steps, 1)
 
     def test_hallucinated_content_is_rejected_before_valid_retry(self):
-        provider = MockProvider([
-            AgentTurn([ToolCall(
-                "verify_sentence",
-                {
-                    "sentence": "I want a spaceship.",
-                    "glosses": ["I", "WANT", "WATER"],
-                },
-                "verify-bad",
-            )]),
-            AgentTurn([ToolCall(
-                "propose_sentence", {"glosses": ["I", "WANT", "WATER"]}, "draft"
-            )]),
-            AgentTurn([ToolCall(
-                "verify_sentence",
-                {"sentence": "I want water.", "glosses": ["I", "WANT", "WATER"]},
-                "verify-good",
-            )]),
-            AgentTurn([ToolCall("speak", {"sentence": "I want water."}, "speak")]),
-        ])
+        provider = MockProvider(
+            [
+                AgentTurn(
+                    [
+                        ToolCall(
+                            "verify_sentence",
+                            {
+                                "sentence": "I want a spaceship.",
+                                "glosses": ["I", "WANT", "WATER"],
+                            },
+                            "verify-bad",
+                        )
+                    ]
+                ),
+                AgentTurn(
+                    [
+                        ToolCall(
+                            "propose_sentence",
+                            {"glosses": ["I", "WANT", "WATER"]},
+                            "draft",
+                        )
+                    ]
+                ),
+                AgentTurn(
+                    [
+                        ToolCall(
+                            "verify_sentence",
+                            {
+                                "sentence": "I want water.",
+                                "glosses": ["I", "WANT", "WATER"],
+                            },
+                            "verify-good",
+                        )
+                    ]
+                ),
+                AgentTurn([ToolCall("speak", {"sentence": "I want water."}, "speak")]),
+            ]
+        )
         spoken = []
         loop = self.make_loop(
-            [Prediction("I", 0.95), Prediction("WANT", 0.95), Prediction("WATER", 0.95)],
+            [
+                Prediction("I", 0.95),
+                Prediction("WANT", 0.95),
+                Prediction("WATER", 0.95),
+            ],
             self.vocabulary,
             provider=provider,
             speak_callback=spoken.append,
@@ -107,17 +128,20 @@ class AgentLoopTests(unittest.TestCase):
         with open(result.trace_path, encoding="utf-8") as handle:
             trace_lines = [json.loads(line) for line in handle]
         rejected = [
-            record for record in trace_lines
+            record
+            for record in trace_lines
             if record.get("tool_name") == "verify_sentence"
         ][0]
         self.assertFalse(rejected["result"]["supported"])
         self.assertIn("spaceship", rejected["result"]["unsupported_words"])
 
     def test_agent_tool_loop_stops_at_five_steps(self):
-        provider = MockProvider([
-            AgentTurn([ToolCall("get_sign_buffer", {}, f"buffer-{index}")])
-            for index in range(10)
-        ])
+        provider = MockProvider(
+            [
+                AgentTurn([ToolCall("get_sign_buffer", {}, f"buffer-{index}")])
+                for index in range(10)
+            ]
+        )
         loop = self.make_loop(
             [Prediction("HELP", 0.95)],
             self.vocabulary,
@@ -180,19 +204,27 @@ class AgentLoopTests(unittest.TestCase):
         self.assertIsNone(loop.verified_sentence)
 
     def test_openai_compatible_tool_call_parsing(self):
-        response = io.BytesIO(json.dumps({
-            "choices": [{
-                "message": {
-                    "tool_calls": [{
-                        "id": "call-1",
-                        "function": {
-                            "name": "get_sign_buffer",
-                            "arguments": "{}",
-                        },
-                    }]
+        response = io.BytesIO(
+            json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "tool_calls": [
+                                    {
+                                        "id": "call-1",
+                                        "function": {
+                                            "name": "get_sign_buffer",
+                                            "arguments": "{}",
+                                        },
+                                    }
+                                ]
+                            }
+                        }
+                    ]
                 }
-            }]
-        }).encode())
+            ).encode()
+        )
         provider = OpenAICompatibleProvider("secret", "unit-test")
         with patch("urllib.request.urlopen", return_value=response):
             turn = provider.complete([{"role": "user", "content": "signs"}], [])
@@ -200,14 +232,20 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(turn.tool_calls[0].arguments, {})
 
     def test_anthropic_tool_call_parsing(self):
-        response = io.BytesIO(json.dumps({
-            "content": [{
-                "type": "tool_use",
-                "id": "tool-1",
-                "name": "get_sign_buffer",
-                "input": {},
-            }]
-        }).encode())
+        response = io.BytesIO(
+            json.dumps(
+                {
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "tool-1",
+                            "name": "get_sign_buffer",
+                            "input": {},
+                        }
+                    ]
+                }
+            ).encode()
+        )
         provider = AnthropicProvider("secret", "unit-test")
         with patch("urllib.request.urlopen", return_value=response):
             turn = provider.complete([{"role": "user", "content": "signs"}], [])

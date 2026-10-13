@@ -15,7 +15,6 @@ from src.isl_recognition.agent_loop import (
     vocabulary_from_file,
 )
 
-
 CASES: list[dict[str, Any]] = [
     {"glosses": ["HELLO"], "expected": "Hello!"},
     {"glosses": ["THANK YOU"], "expected": "Thank you."},
@@ -75,29 +74,30 @@ def evaluate(
             repeats_false_negative += 1
         unsupported = (
             sorted(unsupported_content_words(result.text, case["glosses"]))
-            if not predicted_repeat else []
+            if not predicted_repeat
+            else []
         )
         if not predicted_repeat:
             generated_cases += 1
             sentence_cases += 1
             hallucination_cases += bool(unsupported)
             exact_matches += result.text == case["expected"]
-        case_results.append({
-            "case_id": index + 1,
-            "glosses": case["glosses"],
-            "expected_sentence": case["expected"],
-            "repeat_expected": expected_repeat,
-            "repeat_predicted": predicted_repeat,
-            "sentence": result.text,
-            "exact_sentence_match": (
-                None if predicted_repeat else result.text == case["expected"]
-            ),
-            "unsupported_content_words": unsupported,
-            "trace_path": result.trace_path,
-        })
-    repeat_precision_denominator = (
-        repeats_true_positive + repeats_false_positive
-    )
+        case_results.append(
+            {
+                "case_id": index + 1,
+                "glosses": case["glosses"],
+                "expected_sentence": case["expected"],
+                "repeat_expected": expected_repeat,
+                "repeat_predicted": predicted_repeat,
+                "sentence": result.text,
+                "exact_sentence_match": (
+                    None if predicted_repeat else result.text == case["expected"]
+                ),
+                "unsupported_content_words": unsupported,
+                "trace_path": result.trace_path,
+            }
+        )
+    repeat_precision_denominator = repeats_true_positive + repeats_false_positive
     report = {
         "kind": "handwritten_offline_agent_evaluation_not_sign_recognition_metric",
         "completed_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -107,12 +107,14 @@ def evaluate(
             capture_output=True,
             text=True,
         ).stdout.strip(),
-        "source_worktree_dirty": bool(subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()),
+        "source_worktree_dirty": bool(
+            subprocess.run(
+                ["git", "status", "--porcelain", "--untracked-files=no"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        ),
         "case_count": len(CASES),
         "llm_provider": None,
         "sentence_cases": sentence_cases,
@@ -129,7 +131,8 @@ def evaluate(
         "repeat_false_negative": repeats_false_negative,
         "repeat_request_precision": (
             repeats_true_positive / repeat_precision_denominator
-            if repeat_precision_denominator else None
+            if repeat_precision_denominator
+            else None
         ),
         "cases": case_results,
     }
@@ -137,9 +140,11 @@ def evaluate(
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     report_path = output_directory / f"agent_eval_{timestamp}.json"
     report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({
-        key: value for key, value in report.items() if key != "cases"
-    }, indent=2))
+    print(
+        json.dumps(
+            {key: value for key, value in report.items() if key != "cases"}, indent=2
+        )
+    )
     print(f"Detailed run: {report_path}")
     return report
 

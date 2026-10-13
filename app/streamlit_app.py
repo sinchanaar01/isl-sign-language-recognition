@@ -12,7 +12,6 @@ from pathlib import Path
 
 import numpy as np
 import streamlit as st
-
 from src.isl_recognition.agent import Prediction
 from src.isl_recognition.agent_loop import (
     AgentLoop,
@@ -106,9 +105,7 @@ class SignVideoProcessor(VideoProcessorBase):
             landmarks = np.zeros(FEATURES_PER_FRAME, dtype=np.float32)
             if results.pose_landmarks:
                 for index, point in enumerate(results.pose_landmarks.landmark):
-                    landmarks[index * 3:index * 3 + 3] = (
-                        point.x, point.y, point.z
-                    )
+                    landmarks[index * 3 : index * 3 + 3] = (point.x, point.y, point.z)
                     landmarks[99 + index] = point.visibility
             for hand, start in (
                 (results.left_hand_landmarks, 132),
@@ -116,8 +113,10 @@ class SignVideoProcessor(VideoProcessorBase):
             ):
                 if hand:
                     for index, point in enumerate(hand.landmark):
-                        landmarks[start + index * 3:start + index * 3 + 3] = (
-                            point.x, point.y, point.z
+                        landmarks[start + index * 3 : start + index * 3 + 3] = (
+                            point.x,
+                            point.y,
+                            point.z,
                         )
             self._sequence.append(normalize_frame(landmarks))
             if len(self._sequence) == self._sequence_length:
@@ -130,10 +129,12 @@ class SignVideoProcessor(VideoProcessorBase):
                 with torch.inference_mode():
                     logits = self._model(torch.from_numpy(sequence).unsqueeze(0))
                     probabilities = torch.softmax(logits[0], dim=0).tolist()
-                label, confidence = self._smoother.update({
-                    name: float(probability)
-                    for name, probability in zip(self._classes, probabilities)
-                })
+                label, confidence = self._smoother.update(
+                    {
+                        name: float(probability)
+                        for name, probability in zip(self._classes, probabilities)
+                    }
+                )
                 now = time.monotonic()
                 if (
                     label.casefold() != self._last_emitted_label.casefold()
@@ -322,9 +323,9 @@ if st.button("Generate and verify sentence", disabled=not agent_buffer):
             agent_buffer,
             vocabulary_from_file("data/target_glosses.txt"),
             provider=provider_from_environment(),
-            speak_callback=lambda sentence: session_state.update({
-                "agent_tts_text": sentence
-            }),
+            speak_callback=lambda sentence: session_state.update(
+                {"agent_tts_text": sentence}
+            ),
         )
         result = loop.run()
         session_state["agent_response"] = result

@@ -44,8 +44,7 @@ class SentenceAgent:
         if not predictions:
             return AgentResponse("Start signing to build a sentence.", False, False)
         if any(
-            not prediction.label.strip()
-            or not 0 <= prediction.confidence <= 1
+            not prediction.label.strip() or not 0 <= prediction.confidence <= 1
             for prediction in predictions
         ):
             raise ValueError("Predictions must have labels and confidence in [0, 1]")

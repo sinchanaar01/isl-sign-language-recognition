@@ -161,15 +161,18 @@ $env:ISL_MODEL_PATH = "models/best_landmark.pt"
 
 Keys are never stored in the repository. LLM mode sends recognized glosses and sentence-verification prompts to the configured provider; do not enable it for sensitive conversations without reviewing provider data handling.
 
-## Tests
+## Quality checks
 
-Core preprocessing, signer split, smoothing, confidence gate, and the LLM response parser have standard-library unit tests:
+Install the project development tools, then run the same checks used by GitHub Actions:
 
 ```powershell
-python -m unittest discover -s tests -v
+python -m pip install -e ".[dev]"
+python -m ruff check src tools app tests
+python -m black --check src tools app tests
+python -m pytest
 ```
 
-Model training, video extraction, live webcam capture, and external API calls require their optional dependencies and relevant data/device/credentials; unit tests do not claim these end-to-end paths have run.
+The tests include mocked-provider and deterministic offline-agent cases. Model training, video extraction, live webcam capture, and external API calls require their optional dependencies and relevant data/device/credentials; tests do not claim these end-to-end paths have run. Pytest prints a coverage summary and writes `reports/coverage.xml`. GitHub Actions runs Ruff, Black, and pytest with source coverage on pushes and pull requests.
 
 ## Deployment
 
@@ -182,8 +185,8 @@ To deploy manually: push the repository to a private/public Git remote as approp
 | Model | Dataset/split | Accuracy | Macro F1 | Mean model latency |
 | --- | --- | ---: | ---: | ---: |
 | MobileNetV2 static | Not run: no labeled image samples | Not measured | Not measured | Not measured |
-| LSTM landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
-| GRU landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
+| BiLSTM landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
+| BiGRU landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
 | Transformer landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
 | TCN landmarks | Not run: no labeled ISL clips | Not measured | Not measured | Not measured |
 

@@ -24,7 +24,8 @@ class PredictionSmoother:
         self._values.append(probabilities)
         labels = {label for value in self._values for label in value}
         averaged = {
-            label: sum(value.get(label, 0.0) for value in self._values) / len(self._values)
+            label: sum(value.get(label, 0.0) for value in self._values)
+            / len(self._values)
             for label in labels
         }
         label = max(averaged, key=averaged.__getitem__)
@@ -48,7 +49,9 @@ def load_landmark_model(
     try:
         import torch
     except ImportError as exc:
-        raise RuntimeError("Install the 'app' dependencies to load model checkpoints") from exc
+        raise RuntimeError(
+            "Install the 'app' dependencies to load model checkpoints"
+        ) from exc
     from .models import build_landmark_model
 
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
@@ -61,7 +64,9 @@ def load_landmark_model(
     )
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
-    classes = [label for label, _ in sorted(class_to_idx.items(), key=lambda item: item[1])]
+    classes = [
+        label for label, _ in sorted(class_to_idx.items(), key=lambda item: item[1])
+    ]
     return (
         model,
         classes,
@@ -107,12 +112,9 @@ def predict_video_file(
     model_only_ms = measure_model_latency(model, sample, device)
     probabilities = probabilities_tensor.detach().cpu().tolist()
     class_probabilities = {
-        name: float(probability)
-        for name, probability in zip(classes, probabilities)
+        name: float(probability) for name, probability in zip(classes, probabilities)
     }
-    label, confidence = max(
-        class_probabilities.items(), key=lambda item: item[1]
-    )
+    label, confidence = max(class_probabilities.items(), key=lambda item: item[1])
     return VideoInferenceResult(
         label=label,
         confidence=confidence,

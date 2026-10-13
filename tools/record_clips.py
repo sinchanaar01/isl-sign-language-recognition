@@ -13,7 +13,6 @@ import time
 from pathlib import Path
 from typing import TextIO
 
-
 CSV_FIELDS = ("video_path", "label", "signer_id")
 
 
@@ -35,18 +34,22 @@ def next_clip_number(directory: Path, label: str) -> int:
     return max(numbers, default=0) + 1
 
 
-def append_manifest(csv_path: Path, video_path: Path, label: str, signer_id: str) -> None:
+def append_manifest(
+    csv_path: Path, video_path: Path, label: str, signer_id: str
+) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     file_exists = csv_path.exists() and csv_path.stat().st_size > 0
     with csv_path.open("a", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
         if not file_exists:
             writer.writeheader()
-        writer.writerow({
-            "video_path": str(video_path.resolve()),
-            "label": label,
-            "signer_id": signer_id,
-        })
+        writer.writerow(
+            {
+                "video_path": str(video_path.resolve()),
+                "label": label,
+                "signer_id": signer_id,
+            }
+        )
 
 
 def remove_manifest_entry(csv_path: Path, video_path: Path) -> None:
@@ -57,7 +60,8 @@ def remove_manifest_entry(csv_path: Path, video_path: Path) -> None:
         if not reader.fieldnames or not set(CSV_FIELDS).issubset(reader.fieldnames):
             raise ValueError(f"Cannot safely edit malformed manifest: {csv_path}")
         rows = [
-            row for row in reader
+            row
+            for row in reader
             if Path(row["video_path"]).resolve() != video_path.resolve()
         ]
         fieldnames = reader.fieldnames
@@ -148,8 +152,13 @@ def record(
                 if not ok:
                     raise OSError("Webcam stopped returning frames during countdown")
                 cv2.putText(
-                    frame, f"{label}: recording in {remaining}",
-                    (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
+                    frame,
+                    f"{label}: recording in {remaining}",
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    2,
                 )
                 cv2.imshow("ISL clip recorder", frame)
                 if cv2.waitKey(1000) & 0xFF == ord("q"):
@@ -177,8 +186,13 @@ def record(
                     if not ok:
                         raise OSError("Webcam stopped returning frames while recording")
                     cv2.putText(
-                        frame, f"RECORDING: {label}",
-                        (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
+                        frame,
+                        f"RECORDING: {label}",
+                        (20, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 255),
+                        2,
                     )
                     writer.write(frame)
                     frame_count += 1
@@ -203,8 +217,13 @@ def record(
                 if not ok:
                     break
                 cv2.putText(
-                    frame, "r=review last  d=delete last  any other key=continue",
-                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 220, 0), 2,
+                    frame,
+                    "r=review last  d=delete last  any other key=continue",
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (0, 220, 0),
+                    2,
                 )
                 cv2.imshow("ISL clip recorder", frame)
                 key = cv2.waitKey(1) & 0xFF

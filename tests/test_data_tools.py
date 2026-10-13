@@ -54,11 +54,13 @@ class ClipToolTests(unittest.TestCase):
                 for index, label in enumerate(labels):
                     video = root / f"{signer}_{index}.mp4"
                     video.touch()
-                    rows.append({
-                        "video_path": str(video),
-                        "label": label,
-                        "signer_id": signer,
-                    })
+                    rows.append(
+                        {
+                            "video_path": str(video),
+                            "label": label,
+                            "signer_id": signer,
+                        }
+                    )
             with clips.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(
                     handle, fieldnames=("video_path", "label", "signer_id")
@@ -78,9 +80,7 @@ class ClipToolTests(unittest.TestCase):
             for row in result:
                 assignments.setdefault(row["signer_id"], set()).add(row["split"])
             self.assertTrue(all(len(values) == 1 for values in assignments.values()))
-            self.assertEqual(
-                {row["split"] for row in result}, {"train", "val", "test"}
-            )
+            self.assertEqual({row["split"] for row in result}, {"train", "val", "test"})
 
     def test_make_manifest_fails_for_missing_signer_or_corrupt_clip(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -92,11 +92,13 @@ class ClipToolTests(unittest.TestCase):
                 video = root / f"{index}.mp4"
                 video.touch()
                 videos.append(video)
-                rows.append({
-                    "video_path": str(video),
-                    "label": "HELLO",
-                    "signer_id": signer,
-                })
+                rows.append(
+                    {
+                        "video_path": str(video),
+                        "label": "HELLO",
+                        "signer_id": signer,
+                    }
+                )
             with clips.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(
                     handle, fieldnames=("video_path", "label", "signer_id")

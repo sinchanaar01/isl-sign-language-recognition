@@ -38,7 +38,7 @@ def validate_signer_separation(*datasets: Any) -> dict[str, set[str]]:
         split_signers[split] = signers
     names = tuple(split_signers)
     for index, first in enumerate(names):
-        for second in names[index + 1:]:
+        for second in names[index + 1 :]:
             overlap = split_signers[first] & split_signers[second]
             if overlap:
                 raise ValueError(
@@ -71,18 +71,22 @@ def train_static(
     torch.backends.cudnn.benchmark = False
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     root = Path(data_directory)
-    train_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.RandomRotation(10),
-        transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ])
-    evaluation_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ])
+    train_transform = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.RandomRotation(10),
+            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
+    evaluation_transform = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
     train_data = datasets.ImageFolder(root / "train", transform=train_transform)
     val_data = datasets.ImageFolder(root / "val", transform=evaluation_transform)
     test_data = datasets.ImageFolder(root / "test", transform=evaluation_transform)
@@ -121,18 +125,20 @@ def train_static(
     best_accuracy = -1.0
     mlflow.set_experiment("isl-static-model-comparison")
     with mlflow.start_run(run_name=metrics_prefix):
-        mlflow.log_params({
-            "architecture": "mobilenet_v2",
-            "input_size": 224,
-            "epochs": epochs,
-            "batch_size": batch_size,
-            "seed": seed,
-            "device": str(device),
-            "signer_count": len(set.union(*split_signers.values())),
-            "train_samples": len(train_data),
-            "val_samples": len(val_data),
-            "test_samples": len(test_data),
-        })
+        mlflow.log_params(
+            {
+                "architecture": "mobilenet_v2",
+                "input_size": 224,
+                "epochs": epochs,
+                "batch_size": batch_size,
+                "seed": seed,
+                "device": str(device),
+                "signer_count": len(set.union(*split_signers.values())),
+                "train_samples": len(train_data),
+                "val_samples": len(val_data),
+                "test_samples": len(test_data),
+            }
+        )
         for epoch in range(epochs):
             model.train()
             train_loss = train_correct = train_total = 0
@@ -213,7 +219,9 @@ def train_static(
                 split: len(signers) for split, signers in split_signers.items()
             },
             "samples": {
-                "train": len(train_data), "val": len(val_data), "test": len(test_data)
+                "train": len(train_data),
+                "val": len(val_data),
+                "test": len(test_data),
             },
             "best_validation_accuracy": best_accuracy,
             "test_metrics": metrics,
@@ -223,11 +231,13 @@ def train_static(
         run_path = reports / "runs" / f"{run_id}.json"
         run_path.parent.mkdir(parents=True, exist_ok=True)
         run_path.write_text(json.dumps(run_record, indent=2) + "\n", encoding="utf-8")
-        mlflow.log_metrics({
-            "test_accuracy": metrics["accuracy"],
-            "test_macro_f1": metrics["per_class"]["macro avg"]["f1-score"],
-            "model_only_latency_ms": latency,
-        })
+        mlflow.log_metrics(
+            {
+                "test_accuracy": metrics["accuracy"],
+                "test_macro_f1": metrics["per_class"]["macro avg"]["f1-score"],
+                "model_only_latency_ms": latency,
+            }
+        )
         for artifact in (
             checkpoint_path,
             reports / f"{metrics_prefix}_metrics.json",

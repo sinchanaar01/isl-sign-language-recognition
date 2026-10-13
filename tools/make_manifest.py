@@ -65,7 +65,9 @@ def make_manifest(
         signer = (row.get("signer_id") or "").strip()
         raw_path = (row.get("video_path") or "").strip()
         if not label or not signer or not raw_path:
-            problems.append(f"line {line_number}: blank video_path, label, or signer_id")
+            problems.append(
+                f"line {line_number}: blank video_path, label, or signer_id"
+            )
             continue
         video_path = Path(raw_path)
         if not video_path.is_absolute():
@@ -75,13 +77,17 @@ def make_manifest(
             problems.append(f"line {line_number}: missing video file: {video_path}")
             continue
         if not video_probe(video_path):
-            problems.append(f"line {line_number}: corrupt/unreadable video: {video_path}")
+            problems.append(
+                f"line {line_number}: corrupt/unreadable video: {video_path}"
+            )
             continue
-        valid.append({
-            "video_path": str(video_path),
-            "label": label,
-            "signer_id": signer,
-        })
+        valid.append(
+            {
+                "video_path": str(video_path),
+                "label": label,
+                "signer_id": signer,
+            }
+        )
 
     signers = sorted({row["signer_id"] for row in valid})
     if len(signers) < 3:
@@ -95,9 +101,7 @@ def make_manifest(
             + "\n- ".join(problems)
         )
 
-    splits = signer_independent_split(
-        [row["signer_id"] for row in valid], seed=seed
-    )
+    splits = signer_independent_split([row["signer_id"] for row in valid], seed=seed)
     for row, split in zip(valid, splits):
         row["split"] = str(split)
 
@@ -107,7 +111,8 @@ def make_manifest(
         class_splits[row["label"]].add(row["split"])
         split_signers[row["split"]].add(row["signer_id"])
     missing_training_labels = sorted(
-        label for label, assigned_splits in class_splits.items()
+        label
+        for label, assigned_splits in class_splits.items()
         if "train" not in assigned_splits
     )
     if missing_training_labels:
@@ -116,9 +121,7 @@ def make_manifest(
             f"{missing_training_labels}. Collect each sign from signers assigned "
             "to train, or adjust the split seed after inspecting signer/class coverage."
         )
-    missing_partitions = {"train", "val", "test"} - {
-        row["split"] for row in valid
-    }
+    missing_partitions = {"train", "val", "test"} - {row["split"] for row in valid}
     if missing_partitions:
         raise ValueError(
             f"Signer grouping left empty splits {sorted(missing_partitions)}; "
@@ -127,9 +130,9 @@ def make_manifest(
 
     class_counts: dict[str, dict[str, int]] = {}
     for label in sorted(class_splits):
-        class_counts[label] = dict(Counter(
-            row["split"] for row in valid if row["label"] == label
-        ))
+        class_counts[label] = dict(
+            Counter(row["split"] for row in valid if row["label"] == label)
+        )
     summary = {
         "source_csv": str(clips_csv.resolve()),
         "seed": seed,
@@ -160,8 +163,12 @@ def make_manifest(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--clips", type=Path, default=Path("data/raw/clips.csv"))
-    parser.add_argument("--output", type=Path, default=Path("data/processed/manifest.csv"))
-    parser.add_argument("--report", type=Path, default=Path("reports/data_manifest.json"))
+    parser.add_argument(
+        "--output", type=Path, default=Path("data/processed/manifest.csv")
+    )
+    parser.add_argument(
+        "--report", type=Path, default=Path("reports/data_manifest.json")
+    )
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     make_manifest(args.clips, args.output, args.report, args.seed)

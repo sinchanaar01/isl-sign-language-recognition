@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-import time
 import json
+import time
 from pathlib import Path
 
+from numpy.typing import ArrayLike
 
-def classification_metrics(y_true, y_pred, class_names: list[str]) -> dict:
+
+def classification_metrics(
+    y_true: ArrayLike, y_pred: ArrayLike, class_names: list[str]
+) -> dict:
     try:
         from sklearn.metrics import (
             accuracy_score,
@@ -15,7 +19,9 @@ def classification_metrics(y_true, y_pred, class_names: list[str]) -> dict:
             confusion_matrix,
         )
     except ImportError as exc:
-        raise RuntimeError("Install scikit-learn and matplotlib to evaluate models") from exc
+        raise RuntimeError(
+            "Install scikit-learn and matplotlib to evaluate models"
+        ) from exc
     matrix = confusion_matrix(y_true, y_pred, labels=list(range(len(class_names))))
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
@@ -42,8 +48,8 @@ def classification_metrics(y_true, y_pred, class_names: list[str]) -> dict:
 
 
 def save_evaluation_artifacts(
-    y_true,
-    y_pred,
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
     class_names: list[str],
     output_directory: str | Path,
     prefix: str,
@@ -51,6 +57,7 @@ def save_evaluation_artifacts(
 ) -> dict:
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         import numpy as np

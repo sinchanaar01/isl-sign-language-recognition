@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Iterable, Sequence
+from typing import Sequence
 
 import numpy as np
 
@@ -18,7 +18,9 @@ def select_modality(sequence: np.ndarray, modality: str) -> np.ndarray:
     """Select hand-only or pose-plus-hand features from normalized sequences."""
     values = np.asarray(sequence, dtype=np.float32)
     if values.ndim < 1 or values.shape[-1] != FEATURES_PER_FRAME:
-        raise ValueError(f"Expected last dimension {FEATURES_PER_FRAME}, got {values.shape}")
+        raise ValueError(
+            f"Expected last dimension {FEATURES_PER_FRAME}, got {values.shape}"
+        )
     if modality == "hands_pose":
         return values.copy()
     if modality == "hands":
@@ -26,9 +28,7 @@ def select_modality(sequence: np.ndarray, modality: str) -> np.ndarray:
         hands = values[..., start:].reshape(*values.shape[:-1], 2, 21, 3).copy()
         wrist = hands[..., :1, :].copy()
         hands -= wrist
-        scale = np.linalg.norm(
-            hands[..., 9, :2], axis=-1, keepdims=True
-        )
+        scale = np.linalg.norm(hands[..., 9, :2], axis=-1, keepdims=True)
         scale = np.where(scale < 1e-6, 1.0, scale)
         hands /= scale[..., None]
         return hands.reshape(*values.shape[:-1], FEATURES_HANDS_ONLY)
@@ -51,8 +51,8 @@ def normalize_frame(frame: Sequence[float]) -> np.ndarray:
 
     output = values.copy()
     pose = output[:POSE_XYZ].reshape(33, 3)
-    visibility = output[POSE_XYZ:POSE_XYZ + POSE_VISIBILITY]
-    hands = output[POSE_XYZ + POSE_VISIBILITY:].reshape(2, 21, 3)
+    visibility = output[POSE_XYZ : POSE_XYZ + POSE_VISIBILITY]
+    hands = output[POSE_XYZ + POSE_VISIBILITY :].reshape(2, 21, 3)
 
     if visibility[11] <= 0 or visibility[12] <= 0:
         visible_shoulders = pose[[11, 12], :2]
@@ -107,7 +107,7 @@ def augment_sequence(
         raise ValueError(f"Expected sequence shape (T, {FEATURES_PER_FRAME})")
     if noise_std < 0 or not 0 <= hand_dropout_probability <= 1:
         raise ValueError("Invalid augmentation probability or noise standard deviation")
-    xyz_indices = np.r_[:POSE_XYZ, POSE_XYZ + POSE_VISIBILITY:FEATURES_PER_FRAME]
+    xyz_indices = np.r_[:POSE_XYZ, POSE_XYZ + POSE_VISIBILITY : FEATURES_PER_FRAME]
     values[:, xyz_indices] += rng.normal(
         0.0, noise_std, size=(len(values), len(xyz_indices))
     ).astype(np.float32)
@@ -115,7 +115,7 @@ def augment_sequence(
     for hand in range(2):
         if rng.random() < hand_dropout_probability:
             start = hand_start + hand * HAND_XYZ
-            values[:, start:start + HAND_XYZ] = 0
+            values[:, start : start + HAND_XYZ] = 0
     return values
 
 
@@ -134,7 +134,9 @@ def signer_independent_split(
 
     unique_signers = list(dict.fromkeys(signer_ids))
     if len(unique_signers) < 3:
-        raise ValueError("Signer-independent train/val/test requires at least 3 signers")
+        raise ValueError(
+            "Signer-independent train/val/test requires at least 3 signers"
+        )
 
     rng = np.random.default_rng(seed)
     rng.shuffle(unique_signers)
@@ -149,7 +151,9 @@ def signer_independent_split(
     for signer in unique_signers:
         partition_index = min(
             range(3),
-            key=lambda index: abs(target_counts[index] - (assigned[index] + counts[signer])),
+            key=lambda index: abs(
+                target_counts[index] - (assigned[index] + counts[signer])
+            ),
         )
         assignment[signer] = partitions[partition_index]
         assigned[partition_index] += counts[signer]
@@ -158,9 +162,16 @@ def signer_independent_split(
     absent = [name for name in partitions if name not in assignment.values()]
     for name in absent:
         donor = max(
-            (signer for signer in unique_signers if sum(
-                1 for current in assignment.values() if current == assignment[signer]
-            ) > 1),
+            (
+                signer
+                for signer in unique_signers
+                if sum(
+                    1
+                    for current in assignment.values()
+                    if current == assignment[signer]
+                )
+                > 1
+            ),
             key=lambda signer: counts[signer],
         )
         assignment[donor] = name
