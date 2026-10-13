@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: isl-recognition
+    runtime: docker
+    plan: starter
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: ISL_MODEL_PATH
+        value: models/best_landmark.pt
