@@ -4,7 +4,7 @@
 
 This report describes an end-to-end prototype for isolated Indian Sign Language (ISL) recognition from short video clips, followed by a confidence-aware agent that can turn predicted glosses into a candidate English sentence. The implementation includes MediaPipe landmark extraction, signer-exclusive data splitting, four temporal model families, experiment logging, evaluation artifact generation, an interactive webcam/upload app, and a bounded tool-calling layer with an offline fallback.
 
-The key experimental limitation is data, not a missing score hidden by this report: no licensed ISL videos or consented signer clips are available in the workspace, so no recognition model has been trained. The downloaded WLASL artifact is annotation metadata for American Sign Language (ASL), not video and not ISL training data. Recognition accuracy, macro-F1, ablations, confusion analysis, and live inference performance are therefore explicitly **not measured**. A separate saved, authored-case check exercises only the offline sentence-agent behavior. All reported outcomes below identify the artifact from which they were measured.
+The key experimental limitation is data, not a missing score hidden by this report: no licensed ISL videos are available in the workspace, so no recognition model has been trained. The downloaded WLASL artifact is annotation metadata for American Sign Language (ASL), not video and not ISL training data. Recognition accuracy, macro-F1, ablations, confusion analysis, and live inference performance are therefore explicitly **not measured**. Two saved text-only agent checks exercise the offline sentence-agent behavior, including a separate ambiguity/noise fixture; neither establishes semantic translation quality. All reported outcomes below identify the artifact from which they were measured.
 
 ## 1. Motivation and problem definition
 
@@ -73,7 +73,7 @@ The primary local OpenCV app (`python -m src.isl_recognition.live`) gates recogn
 
 ### 5.1 Recognition
 
-No videos were available to preprocess, and no landmark model or image model was trained. Consequently, no signer-independent recognition result exists.
+No videos were available to preprocess, and no landmark model or image model was trained. The attempted preprocessing run stopped before reading clips because the downloaded dataset manifest did not exist; its error and null processed-count field are saved in `reports/runs/preprocessing_blocked_20261013T174000Z.json`. Consequently, no signer-independent recognition result exists.
 
 | Model/configuration | Accuracy | Macro-F1 | Per-class metrics | Confusion analysis | Latency |
 | --- | --- | --- | --- | --- | --- |

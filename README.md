@@ -12,7 +12,7 @@ pinned: false
 
 A research prototype for recognizing short, isolated sign clips from a webcam and turning a stream of recognized glosses into English text and speech. It provides an end-to-end data, training, evaluation, and demo pipeline; it does **not** include a pretrained model.
 
-> **Current evidence:** The official WLASL v0.3 annotation JSON (ASL) was downloaded and audited; its recorded counts/checksum are in [`reports/runs/wlasl_metadata_audit.json`](reports/runs/wlasl_metadata_audit.json). It contains metadata only; videos were not acquired. Automated INCLUDE access was refused before its license or media could be verified, and Kaggle credentials/CLI were unavailable. No ISL media was acquired, no model was trained, and no recognition accuracy or live latency has been measured. WLASL is ASL, not ISL.
+> **Current evidence:** The official WLASL v0.3 annotation JSON (ASL) was downloaded and audited; its recorded counts/checksum are in [`reports/runs/wlasl_metadata_audit.json`](reports/runs/wlasl_metadata_audit.json). It contains metadata only; videos were not acquired. Automated INCLUDE access was refused before its license or media could be verified, and Kaggle credentials/CLI were unavailable. No ISL media was acquired, no model was trained, and no recognition accuracy or live latency has been measured. The preprocessing attempt's missing-input evidence is saved in [`reports/runs/preprocessing_blocked_20261013T174000Z.json`](reports/runs/preprocessing_blocked_20261013T174000Z.json). WLASL is ASL, not ISL.
 
 ## Problem and scope
 
@@ -68,6 +68,16 @@ Dataset acquisition status, provenance, and reproducible instructions are in [`d
 | Kaggle ISL | Varies by uploader | No dataset selected/downloaded; discovery blocked and license not verified | Choose an exact dataset only after checking uploader, label meanings, license, and signer IDs |
 
 Raw/derived datasets, model weights, credentials, and experiment runs are excluded from Git. Do not redistribute media unless the original provider's terms allow it.
+
+### Attempt automatic acquisition
+
+The acquisition helper tries the official INCLUDE source first, then Kaggle when its CLI/API credentials are available. It refuses unknown-size or unverified-license downloads, filters only matching categories, audits video readability, and reports missing signer metadata instead of guessing it:
+
+```powershell
+python -m tools.download_data
+```
+
+This machine's attempt is saved at [`reports/runs/data_acquisition_20261013T2244+0530.json`](reports/runs/data_acquisition_20261013T2244+0530.json): INCLUDE refused the request before the data/license could be checked, and Kaggle credentials/CLI were absent. Follow [`data/sources.md`](data/sources.md) and [`docs/STATUS.md`](docs/STATUS.md) for the exact manual unblock steps. No corpus was substituted.
 
 The observed WLASL metadata values and source checksum are recorded in [`reports/runs/wlasl_metadata_audit.json`](reports/runs/wlasl_metadata_audit.json). They are metadata counts, not videos downloaded, ISL examples, or model-training samples.
 
@@ -141,7 +151,7 @@ After a real landmark model has been trained, launch the OpenCV camera app:
 python -m src.isl_recognition.live
 ```
 
-This primary demo detects a sign start from visible-wrist motion, ends a segment after 12 still/no-hand frames, resamples the captured segment to 32 frames, and classifies it once. The window shows ready/signing/processing/cooldown, the latest word and confidence, processing FPS, and a running offline sentence; press `q` to exit. Motion threshold, onset-frame count, end-frame count, cooldown, camera index, and model path can be changed with `--help`. The app saves the observed camera-to-displayed-word latency and FPS to `reports/runs/`. It currently stops before camera initialization when the checkpoint is missing; no live run or timing measurement is available.
+This primary demo detects a sign start after 3 consecutive frames with visible wrists moving at least the default normalized threshold of 0.02, ends a segment after 12 still/no-hand frames, resamples the captured segment to 32 frames, and classifies it once. The 0.8-second cooldown also waits for a stable/no-hand release before rearming. The window shows ready/signing/processing/cooldown, the latest word and confidence, processing FPS, and a running offline sentence; press `q` to exit. Motion threshold, onset-frame count, end-frame count, cooldown, camera index, and model path can be changed with `--help`. The app saves the observed camera-to-displayed-word latency and FPS to `reports/runs/`. It currently stops before camera initialization when the checkpoint is missing; no live run or timing measurement is available.
 
 ## Run the secondary Streamlit app
 
@@ -235,7 +245,7 @@ A separate, text-only 30-case fixture in [`data/evaluation/agent_independent_cas
 
 ## Reproduce in five steps
 
-These commands assume you have already verified the vocabulary with a fluent signer and collected real, consenting clips from at least three signer IDs. They do not produce a valid model if the data/license/signer requirements are unmet.
+These commands assume you have already verified the vocabulary with a fluent signer and acquired licensed external training clips with documented signer IDs. They do not produce a valid model if data/license/signer requirements are unmet. Your own `data/raw/own/` recordings are reserved for a separate held-out live-demo check and are not part of these training commands.
 
 ```powershell
 # 1. Install in a supported Python environment.
@@ -243,17 +253,18 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[app,train,dev]"
 
-# 2. Collect multiple labels/signers interactively; review/delete each clip.
-python -m tools.record_clips --signer-id signer_01
+# 2. Acquire the verified licensed external dataset; configure Kaggle first if needed.
+python -m tools.download_data --kaggle-slug OWNER/VERIFIED-DATASET-SLUG
 
-# 3. Validate all media and signer splits, then extract all landmarks.
-python -m tools.make_manifest --clips data/raw/clips.csv
-python -m src.isl_recognition.data --source-csv data/raw/clips.csv --output-dir data/processed
+# 3. Validate signer-independent splits and preprocess that external dataset.
+python -m tools.make_manifest --clips data/raw/downloaded/clips.csv --output data/processed/manifest.csv --report reports/data_manifest.json
+python -m src.isl_recognition.data --source-csv data/raw/downloaded/clips.csv --output-dir data/processed
 
 # 4. Run the real four-model, three-seed, modality/augmentation/length grid.
 python -m src.isl_recognition.train_landmarks --manifest data/processed/manifest.csv --architectures lstm gru transformer tcn --seeds 42 43 44 --modalities hands hands_pose --augmentations on off --sequence-lengths 16 32 48 --epochs 40
 
-# 5. Launch the webcam/upload application.
+# 5. Launch the primary local camera demo (Streamlit is secondary).
+python -m src.isl_recognition.live
 streamlit run app/streamlit_app.py
 ```
 

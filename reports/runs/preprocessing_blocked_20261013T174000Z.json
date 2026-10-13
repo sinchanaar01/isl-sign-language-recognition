@@ -1,0 +1,11 @@
+{
+  "kind": "preprocessing_attempt",
+  "completed_at_utc": "2026-10-13T17:39:59.9880138Z",
+  "status": "BLOCKED - needs human",
+  "source_csv": "data/raw/downloaded/clips.csv",
+  "source_exists": false,
+  "error_exit_code": 1,
+  "error_message": "FileNotFoundError: Licensed external clip CSV not found: data\\raw\\downloaded\\clips.csv. Acquire licensed training clips and prepare data/raw/downloaded/clips.csv with video_path,label,signer_id. Keep data/raw/own/clips.csv reserved for held-out live-demo checks.",
+  "processed_clip_count": null,
+  "output_manifest_created": false
+}
