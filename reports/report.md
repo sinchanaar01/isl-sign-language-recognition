@@ -30,11 +30,11 @@ The agent follows the general reasoning-and-action pattern in which a language m
 
 The WLASL v0.3 annotation JSON was fetched from a pinned revision of the upstream repository. The saved audit artifact, `reports/runs/wlasl_metadata_audit.json`, includes the URL, SHA-256 digest, timestamp, parsed counts, language, and explicit `video_media_downloaded: false` and `training_samples: 0` fields. The audit found 2,000 gloss categories, 21,083 annotation instances, 119 distinct signer identifiers, and 21,083 video identifiers in the metadata. These are counts of ASL annotations/IDs, not locally available recordings or training examples. WLASL's Computational Use of Data Agreement must be read and accepted before any media use; no such use is claimed here.
 
-The INCLUDE ISL dataset was considered as the preferred in-domain source, but first-party media access and license terms could not be confirmed from this environment. No Kaggle dataset was selected because an uploader-specific license and signer provenance could not be verified. `data/sources.md` records these decisions. Candidate target words in `data/target_glosses.txt` cite the ISLRTC dictionary landing page, but the corresponding individual entries could not be verified. Each sign, label, and regional variant needs review by a fluent ISL signer.
+The INCLUDE ISL dataset was considered as the preferred in-domain source, but the automated request to the candidate IIT Madras page was refused before its files, size, or license could be inspected. The Kaggle path was blocked because the CLI and API credentials were absent. The saved acquisition audit records both outcomes; no media was downloaded and the target list was not rewritten to imply a dataset vocabulary. No Kaggle dataset was selected because an uploader-specific license and signer provenance could not be verified. `data/sources.md` records these decisions. Candidate target words in `data/target_glosses.txt` cite the ISLRTC dictionary landing page, but the corresponding individual entries could not be verified. Each sign, label, and regional variant needs review by a fluent ISL signer.
 
 ### 3.2 Human collection and split
 
-`tools/record_clips.py` records consented 2–3 second webcam clips, stores a pseudonymous signer ID, and allows review or deletion before continuing. `tools/make_manifest.py` verifies CSV fields, file readability, at least three distinct signers, non-empty partitions, and training coverage for every label. It assigns signer-exclusive train, validation, and test groups; it does not split adjacent clips of a signer across partitions. The proposed target of 20 words, 30 clips per word, and at least three signers is a collection plan, not observed data.
+`tools/record_clips.py` records consented 2–3 second webcam clips under `data/raw/own/`, stores a pseudonymous signer ID, and allows review or deletion before continuing. Those locally recorded clips are reserved for held-out live-demo checks and must not be passed to preprocessing or training. Training clips must come from an appropriately licensed external source in a separate `data/raw/downloaded/` manifest. `tools/make_manifest.py` verifies CSV fields, file readability, at least three distinct signers, non-empty partitions, and training coverage for every label. It assigns signer-exclusive train, validation, and test groups; it does not split adjacent clips of a signer across partitions. The proposed target of 20 words, 30 clips per word, and at least three signers is a collection plan, not observed data.
 
 If a class does not occur for a training signer, the manifest reports the coverage issue instead of putting a signer into multiple partitions. The split must be inspected along with class-by-split counts before training. This is particularly important for small signer counts, where a nominally valid group split can leave an evaluation class unsupported.
 
@@ -67,6 +67,8 @@ Sentence verification first applies a rule-based content-token check against the
 
 The Streamlit interface has webcam/WebRTC and upload modes, smoothing/confidence display, sign buffer, agent trace, final sentence, and browser TTS. In the absence of a trained checkpoint, it disables model prediction rather than emitting fabricated or random labels. The upload path provides an inference UI without requiring camera permission or WebRTC reachability, but it still requires a real checkpoint for prediction.
 
+The primary local OpenCV app (`python -m src.isl_recognition.live`) gates recognition on hand visibility and wrist motion, captures a segment until the configured still/no-hand-frame boundary, resamples it to 32 frames, and emits one prediction before cooldown. Its overlay includes state, predicted word/confidence, processing FPS, and the running offline sentence. It is implemented but not exercised against a camera because there is no trained checkpoint in this workspace. No FPS or camera-frame-to-display latency measurement was recorded.
+
 ## 5. Experiments and results
 
 ### 5.1 Recognition
@@ -89,7 +91,13 @@ The recorded run `reports/runs/agent_eval_20261013T164559Z.json` contains a run 
 
 These quantities describe a finite, hand-written set and deterministic local control flow only. They are not model-recognition metrics, human judgments of fluency or semantic fidelity, signer studies, or tests of a live LLM provider. In particular, the token guard can miss paraphrases and cannot establish that an English sentence preserves the intent of an ISL utterance.
 
-### 5.3 Ablations
+### 5.3 Separate ambiguity/noise agent check
+
+The second fixture, `data/evaluation/agent_independent_cases.json`, contains 30 text-only gloss hypotheses, including 18 marked ambiguous and 15 marked noisy. The cases are separate from the evaluator implementation and are not sign recordings or validated ISL sentences. The saved run is `reports/runs/agent_eval_independent_20261013T172914Z.json`; it reports the fixture SHA-256 and labels the evaluation as not sign recognition.
+
+No API-backed provider was configured for this run, so the result is for the deterministic offline fallback only. Twenty cases proceeded to sentence generation; zero were flagged by the combined configured check (unsupported content-token detection or failed verification), giving a measured fixture flag rate of 0/20 (0.0%). Ten cases were expected to request a repeat; the run recorded 10 true positives, zero false positives, and zero false negatives, for repeat precision 10/10 and recall 10/10. These are finite-set implementation checks, not evidence that the sentence meanings are faithful. The token-level check is not a human semantic judgment, and noisy text cases do not represent visual recognition noise.
+
+### 5.4 Ablations
 
 | Factor | Planned comparison | Result |
 | --- | --- | --- |

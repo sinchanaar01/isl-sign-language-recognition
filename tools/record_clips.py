@@ -93,7 +93,7 @@ def play_clip(video_path: Path, cv2_module) -> None:
 def record(
     signer_id: str,
     output_root: Path = Path("data/raw/own"),
-    manifest_path: Path = Path("data/raw/clips.csv"),
+    manifest_path: Path = Path("data/raw/own/clips.csv"),
     camera_index: int = 0,
     duration_seconds: float = 2.5,
     countdown_seconds: int = 3,
@@ -249,7 +249,9 @@ def main() -> None:
     parser.add_argument("--duration", type=float, default=2.5)
     parser.add_argument("--countdown", type=int, default=3)
     parser.add_argument("--output-root", type=Path, default=Path("data/raw/own"))
-    parser.add_argument("--manifest", type=Path, default=Path("data/raw/clips.csv"))
+    parser.add_argument(
+        "--manifest", type=Path, default=Path("data/raw/own/clips.csv")
+    )
     args = parser.parse_args()
     record(
         args.signer_id,

@@ -1,0 +1,630 @@
+{
+  "kind": "separate_independent_agent_evaluation_not_sign_recognition",
+  "completed_at_utc": "2026-10-13T17:29:14.955468+00:00",
+  "evaluation_set": "data\\evaluation\\agent_independent_cases.json",
+  "evaluation_set_sha256": "c6821d2d495eb0c2a264266da0b305c3c7f8fb7c2c68eabe25c448be9b4204ea",
+  "source_git_commit": "988d59c53234040c45b84ce84e66368fb878375c",
+  "source_worktree_dirty": true,
+  "case_count": 30,
+  "ambiguous_case_count": 18,
+  "noisy_case_count": 15,
+  "provider": "deterministic-offline",
+  "live_llm_provider_used": false,
+  "generated_sentence_count": 20,
+  "hallucination_cases": 0,
+  "hallucination_rate": 0.0,
+  "repeat_true_positive": 10,
+  "repeat_false_positive": 0,
+  "repeat_false_negative": 0,
+  "repeat_request_precision": 1.0,
+  "repeat_request_recall": 1.0,
+  "hallucination_measurement": "A generated case is flagged if the rule-based content-token checker finds unsupported words or the configured verification rejects it. This is not a human semantic-faithfulness judgment.",
+  "cases": [
+    {
+      "id": "ext-001",
+      "ambiguous": false,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "HELLO"
+      ],
+      "confidences": [
+        0.94
+      ],
+      "text": "Hello!",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_e4c9617d9d994082996ae9b3bc6b7bdb.jsonl"
+    },
+    {
+      "id": "ext-002",
+      "ambiguous": false,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "THANK",
+        "YOU"
+      ],
+      "confidences": [
+        0.91,
+        0.92
+      ],
+      "text": "Thank you.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_f0b1bc1486144317b8f35e00fa1fdea3.jsonl"
+    },
+    {
+      "id": "ext-003",
+      "ambiguous": false,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "I",
+        "WANT",
+        "WATER"
+      ],
+      "confidences": [
+        0.95,
+        0.89,
+        0.93
+      ],
+      "text": "I want water.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_67ae575515ab4b47b0d11b50fd6eacfd.jsonl"
+    },
+    {
+      "id": "ext-004",
+      "ambiguous": false,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "I",
+        "NEED",
+        "HELP"
+      ],
+      "confidences": [
+        0.91,
+        0.9,
+        0.95
+      ],
+      "text": "I need help.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_5e542590fc6442cd82bf03b3594c97e3.jsonl"
+    },
+    {
+      "id": "ext-005",
+      "ambiguous": false,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "PLEASE",
+        "HELP",
+        "ME"
+      ],
+      "confidences": [
+        0.92,
+        0.94,
+        0.88
+      ],
+      "text": "Please help me.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_1c64d89b31af44c183f0598b6a5ef6ad.jsonl"
+    },
+    {
+      "id": "ext-006",
+      "ambiguous": false,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "WHAT",
+        "YOUR",
+        "NAME"
+      ],
+      "confidences": [
+        0.92,
+        0.91,
+        0.94
+      ],
+      "text": "What is your name?",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_99698b21f2cd49b2ad8b605249450467.jsonl"
+    },
+    {
+      "id": "ext-007",
+      "ambiguous": false,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "WHERE",
+        "YOU",
+        "LIVE"
+      ],
+      "confidences": [
+        0.9,
+        0.94,
+        0.91
+      ],
+      "text": "Where do you live?",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_10408b93822441ec8377e02e7d27fe6e.jsonl"
+    },
+    {
+      "id": "ext-008",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "WATER",
+        "PLEASE"
+      ],
+      "confidences": [
+        0.92,
+        0.9
+      ],
+      "text": "Water please.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_0f351c8009c346d397bdf8b792c1791d.jsonl"
+    },
+    {
+      "id": "ext-009",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "FOOD",
+        "WATER"
+      ],
+      "confidences": [
+        0.93,
+        0.91
+      ],
+      "text": "Food water.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_83812ade77de4b07aca78754b29aecf5.jsonl"
+    },
+    {
+      "id": "ext-010",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "YES",
+        "NO"
+      ],
+      "confidences": [
+        0.88,
+        0.91
+      ],
+      "text": "Yes no.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_39e543d67fc54dcda4b8ea65df582e72.jsonl"
+    },
+    {
+      "id": "ext-011",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "GOOD",
+        "BAD"
+      ],
+      "confidences": [
+        0.9,
+        0.89
+      ],
+      "text": "Good bad.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_d51a76af02d84fa29aef40cd6a23f9ec.jsonl"
+    },
+    {
+      "id": "ext-012",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "HELP",
+        "STOP"
+      ],
+      "confidences": [
+        0.91,
+        0.9
+      ],
+      "text": "Help stop.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_1a189d6d67e849d1b7cf1c417af2ab41.jsonl"
+    },
+    {
+      "id": "ext-013",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "HOME",
+        "FAMILY"
+      ],
+      "confidences": [
+        0.91,
+        0.92
+      ],
+      "text": "Home family.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_9b5898c535ba4b0aaba0e8f7a5bf1a89.jsonl"
+    },
+    {
+      "id": "ext-014",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "SORRY",
+        "PLEASE"
+      ],
+      "confidences": [
+        0.9,
+        0.91
+      ],
+      "text": "Sorry please.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_cff2babdce2948f5a6846d7a81045392.jsonl"
+    },
+    {
+      "id": "ext-015",
+      "ambiguous": true,
+      "noisy": false,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "WAIT",
+        "HELP"
+      ],
+      "confidences": [
+        0.92,
+        0.9
+      ],
+      "text": "Wait help.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_18ae3210c89c4b999e458376f02fce5b.jsonl"
+    },
+    {
+      "id": "ext-016",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "I",
+        "WANT",
+        "WATER"
+      ],
+      "confidences": [
+        0.92,
+        0.31,
+        0.91
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_d086a07ab73e4bb2a17612189df6102b.jsonl"
+    },
+    {
+      "id": "ext-017",
+      "ambiguous": false,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "PLEASE",
+        "HELP",
+        "ME"
+      ],
+      "confidences": [
+        0.94,
+        0.29,
+        0.91
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_fd17ce429a074fa1a1a32e20aa8477c0.jsonl"
+    },
+    {
+      "id": "ext-018",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "WHAT",
+        "YOUR",
+        "NAME"
+      ],
+      "confidences": [
+        0.9,
+        0.35,
+        0.92
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_01c37c5066ff42e6a70965704609de34.jsonl"
+    },
+    {
+      "id": "ext-019",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "YES",
+        "NO"
+      ],
+      "confidences": [
+        0.33,
+        0.92
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_04f02e9c9423446bb9115166a248327e.jsonl"
+    },
+    {
+      "id": "ext-020",
+      "ambiguous": false,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "WATER",
+        "WATER",
+        "PLEASE"
+      ],
+      "confidences": [
+        0.91,
+        0.37,
+        0.9
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_2b6a8cb87a454cb389ab2f2b56c0e446.jsonl"
+    },
+    {
+      "id": "ext-021",
+      "ambiguous": false,
+      "noisy": true,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "HELLO",
+        "HELLO"
+      ],
+      "confidences": [
+        0.93,
+        0.9
+      ],
+      "text": "Hello hello.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_e47b63b110854a74b25efeb33cfdf9f5.jsonl"
+    },
+    {
+      "id": "ext-022",
+      "ambiguous": false,
+      "noisy": true,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "I",
+        "WANT",
+        "FOOD",
+        "FOOD"
+      ],
+      "confidences": [
+        0.91,
+        0.92,
+        0.9,
+        0.89
+      ],
+      "text": "I want food food.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_57c738cec3f0485f96e64539cdc96494.jsonl"
+    },
+    {
+      "id": "ext-023",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "HELP",
+        "HELP",
+        "STOP"
+      ],
+      "confidences": [
+        0.91,
+        0.89,
+        0.92
+      ],
+      "text": "Help help stop.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_69e7eb315c6e46c59027e8f803d34429.jsonl"
+    },
+    {
+      "id": "ext-024",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "WHERE",
+        "WHERE",
+        "YOU"
+      ],
+      "confidences": [
+        0.92,
+        0.91,
+        0.9
+      ],
+      "text": "Where where you.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_fdf306e7c7374db58cdac331d8f4c8e0.jsonl"
+    },
+    {
+      "id": "ext-025",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": false,
+      "predicted_repeat": false,
+      "glosses": [
+        "NAME",
+        "WHAT",
+        "NAME"
+      ],
+      "confidences": [
+        0.9,
+        0.91,
+        0.89
+      ],
+      "text": "Name what name.",
+      "verified": true,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_8a2ce23fd87e40be850a701164a68fa6.jsonl"
+    },
+    {
+      "id": "ext-026",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "THANK",
+        "SORRY",
+        "PLEASE"
+      ],
+      "confidences": [
+        0.92,
+        0.28,
+        0.91
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_f2a3af2be8c147299beda08d54d9d4a3.jsonl"
+    },
+    {
+      "id": "ext-027",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "HOME",
+        "WAIT",
+        "HOME"
+      ],
+      "confidences": [
+        0.9,
+        0.34,
+        0.89
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_937524a65ac044c89cae1787fa870af8.jsonl"
+    },
+    {
+      "id": "ext-028",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "FRIEND",
+        "FAMILY"
+      ],
+      "confidences": [
+        0.91,
+        0.39
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_ee30c309b7a0451e88354177952fe20b.jsonl"
+    },
+    {
+      "id": "ext-029",
+      "ambiguous": true,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "GOOD",
+        "GOOD",
+        "BAD"
+      ],
+      "confidences": [
+        0.9,
+        0.36,
+        0.91
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_efb496f556334d12aed09a0c9f0bd64d.jsonl"
+    },
+    {
+      "id": "ext-030",
+      "ambiguous": false,
+      "noisy": true,
+      "expected_repeat": true,
+      "predicted_repeat": true,
+      "glosses": [
+        "I",
+        "NEED",
+        "HELP",
+        "HELP"
+      ],
+      "confidences": [
+        0.93,
+        0.91,
+        0.88,
+        0.4
+      ],
+      "text": "Please repeat this sign clearly.",
+      "verified": false,
+      "unsupported_content_words": [],
+      "trace_path": "reports\\agent_traces\\20261013T172914_147d036203524b8c8b3ebf8a190d741e.jsonl"
+    }
+  ]
+}

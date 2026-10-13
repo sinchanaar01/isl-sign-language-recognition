@@ -43,8 +43,9 @@ def make_manifest(
     clips_csv = Path(clips_csv)
     if not clips_csv.is_file():
         raise FileNotFoundError(
-            f"Clip CSV not found: {clips_csv}. Record clips first with "
-            "`python -m tools.record_clips --signer-id SIGNER_ID`."
+            f"Licensed external clip CSV not found: {clips_csv}. Prepare "
+            "`data/raw/downloaded/clips.csv` with documented signer IDs; keep "
+            "`data/raw/own/clips.csv` reserved for held-out live-demo tests."
         )
     with clips_csv.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
@@ -162,7 +163,9 @@ def make_manifest(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--clips", type=Path, default=Path("data/raw/clips.csv"))
+    parser.add_argument(
+        "--clips", type=Path, default=Path("data/raw/downloaded/clips.csv")
+    )
     parser.add_argument(
         "--output", type=Path, default=Path("data/processed/manifest.csv")
     )

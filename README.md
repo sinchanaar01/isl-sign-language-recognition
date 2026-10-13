@@ -12,7 +12,7 @@ pinned: false
 
 A research prototype for recognizing short, isolated sign clips from a webcam and turning a stream of recognized glosses into English text and speech. It provides an end-to-end data, training, evaluation, and demo pipeline; it does **not** include a pretrained model.
 
-> **Current evidence:** The official WLASL v0.3 annotation JSON (ASL) was downloaded and audited; its recorded counts/checksum are in [`reports/runs/wlasl_metadata_audit.json`](reports/runs/wlasl_metadata_audit.json). It contains metadata only; videos were not acquired. No INCLUDE or Kaggle media samples were obtained, no model was trained, and no recognition accuracy or latency has been measured. WLASL is ASL, not ISL.
+> **Current evidence:** The official WLASL v0.3 annotation JSON (ASL) was downloaded and audited; its recorded counts/checksum are in [`reports/runs/wlasl_metadata_audit.json`](reports/runs/wlasl_metadata_audit.json). It contains metadata only; videos were not acquired. Automated INCLUDE access was refused before its license or media could be verified, and Kaggle credentials/CLI were unavailable. No ISL media was acquired, no model was trained, and no recognition accuracy or live latency has been measured. WLASL is ASL, not ISL.
 
 ## Problem and scope
 
@@ -82,18 +82,18 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[app,train,dev]"
 ```
 
-For consented clips, use the webcam recorder and validator:
+Use the webcam recorder only for a separate, consented **held-out live-demo set**. By default, clips and their CSV stay under `data/raw/own/`; never pass this CSV to preprocessing or training:
 
 ```powershell
 python -m tools.record_clips --signer-id signer_01
 # At the review prompt: r replays the clip, d deletes it, q quits.
-python -m tools.make_manifest --clips data/raw/clips.csv
 ```
 
-The planned data-collection target is the 20 candidate terms in `data/target_glosses.txt`, with 30 clips per term from at least 3 consenting signers. This is a target only; it is not current dataset size. The manifest tool checks media readability, signer counts, class coverage in training, and writes real split counts under `reports/`. For externally sourced licensed clips, prepare `data/raw/clips.csv` with `video_path,label,signer_id`; relative paths resolve against that CSV. Never guess missing signer identities.
+The planned data-collection target is the 20 candidate terms in `data/target_glosses.txt`, with 30 clips per term from at least 3 consenting signers. This is a target only; it is not current dataset size. Have a fluent signer verify the signs first. For **training**, use only a licensed external dataset, for example `data/raw/downloaded/clips.csv`, with `video_path,label,signer_id`; relative paths resolve against that CSV. Never guess missing signer identities. The manifest validator checks media readability, signer counts, class coverage in training, and writes split counts under `reports/`.
 
 ```powershell
-python -m src.isl_recognition.data --source-csv data/raw/clips.csv --output-dir data/processed
+python -m tools.make_manifest --clips data/raw/downloaded/clips.csv --output data/processed/manifest.csv --report reports/data_manifest.json
+python -m src.isl_recognition.data --source-csv data/raw/downloaded/clips.csv --output-dir data/processed
 ```
 
 The extractor writes one `.npy` sequence per clip and `manifest.csv`. Failed rows are listed in `data/processed/preprocessing_errors.txt`; inspect this file and the output count before training. At least three signers are required. The train command additionally checks that all labels occur in the training partition.
@@ -133,7 +133,17 @@ Reports include accuracy, macro-F1, per-class precision/recall/F1, confusion mat
 
 If there is no supported local GPU/training stack, use [`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb) in Colab. Set its repository URL, mount private Drive containing the real consented clips, then run the cells in order. It does not generate synthetic training examples or metrics.
 
-## Run the webcam app
+## Run the local live demo (primary)
+
+After a real landmark model has been trained, launch the OpenCV camera app:
+
+```powershell
+python -m src.isl_recognition.live
+```
+
+This primary demo detects a sign start from visible-wrist motion, ends a segment after 12 still/no-hand frames, resamples the captured segment to 32 frames, and classifies it once. The window shows ready/signing/processing/cooldown, the latest word and confidence, processing FPS, and a running offline sentence; press `q` to exit. Motion threshold, onset-frame count, end-frame count, cooldown, camera index, and model path can be changed with `--help`. The app saves the observed camera-to-displayed-word latency and FPS to `reports/runs/`. It currently stops before camera initialization when the checkpoint is missing; no live run or timing measurement is available.
+
+## Run the secondary Streamlit app
 
 After training a landmark model, run the app:
 
@@ -194,7 +204,9 @@ No score is invented. See [`reports/report.md`](reports/report.md) for the curre
 
 ### Agent-only authored-case check
 
-The deterministic offline fallback was run against the hand-written cases in [`tools/evaluate_agent.py`](tools/evaluate_agent.py). The saved [`agent evaluation run`](reports/runs/agent_eval_20261013T164559Z.json) records 25 exact sentence matches in 25 eligible text cases, no unsupported content words flagged by the lexical rule on those examples, and repeat-request precision of 1.0 on the authored low-confidence cases. This is a narrow code-path check—not sign-recognition accuracy, a human evaluation of ISL/English quality, or an LLM-provider evaluation. The lexical guard cannot prove semantic faithfulness.
+The deterministic offline fallback was run against the hand-written cases in [`tools/evaluate_agent.py`](tools/evaluate_agent.py). The saved [`authored-case agent evaluation`](reports/runs/agent_eval_20261013T164559Z.json) records 25 exact sentence matches in 25 eligible text cases, no unsupported content words flagged by the lexical rule on those examples, and repeat-request precision of 1.0 on the authored low-confidence cases.
+
+A separate, text-only 30-case fixture in [`data/evaluation/agent_independent_cases.json`](data/evaluation/agent_independent_cases.json) was curated independently of the agent implementation and includes 18 ambiguous and 15 noisy cases. The saved [`independent evaluation run`](reports/runs/agent_eval_independent_20261013T172914Z.json) used the deterministic offline provider path (no live LLM credentials/provider call): 20 cases generated sentences and 0/20 (0.0%) were flagged by the configured unsupported-token/verification checks; 10 expected repeat cases produced 10 true positives, 0 false positives, and 0 false negatives (precision 10/10 and recall 10/10). These figures are limited to this fixture and deterministic code path. They are not sign-recognition metrics, human semantic judgments, validated ISL sentences, or evidence of live-LLM performance. The lexical guard cannot prove semantic faithfulness.
 
 ### Ablation status
 

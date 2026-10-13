@@ -1,0 +1,43 @@
+{
+  "kind": "dataset_acquisition_audit",
+  "attempted_at_utc": "2026-10-13T17:22:30.678531+00:00",
+  "target_glosses": [
+    "HELLO",
+    "THANK YOU",
+    "PLEASE",
+    "SORRY",
+    "YES",
+    "NO",
+    "HELP",
+    "WATER",
+    "FOOD",
+    "HOME",
+    "FAMILY",
+    "FRIEND",
+    "LOVE",
+    "GOOD",
+    "BAD",
+    "STOP",
+    "WAIT",
+    "NAME",
+    "WHAT",
+    "WHERE"
+  ],
+  "free_disk_bytes_before_attempt": 71574605824,
+  "sources": [
+    {
+      "source": "INCLUDE",
+      "status": "blocked",
+      "source_page": "https://www.iitm.ac.in/donlab/INCLUDE",
+      "reason": "Official source request failed: <urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+    },
+    {
+      "source": "Kaggle",
+      "status": "blocked",
+      "reason": "Missing ~/.kaggle/kaggle.json. Configure Kaggle API credentials following https://github.com/Kaggle/kaggle-api#api-credentials."
+    }
+  ],
+  "status": "BLOCKED - needs human",
+  "manual_instructions": "Contact INCLUDE maintainers for an official media URL and license, or configure Kaggle API credentials, verify an exact dataset card/license and signer metadata, then rerun `python -m tools.download_data --kaggle-slug OWNER/SLUG`. See data/sources.md.",
+  "free_disk_bytes_after_attempt": 71574671360
+}

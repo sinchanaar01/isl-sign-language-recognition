@@ -5,7 +5,7 @@
 - **Do not substitute ASL for ISL.** WLASL is retained only as an auditable source of ASL annotations; its video media was not downloaded, and it cannot substantiate an ISL model.
 - **First-party acquisition is a blocker.** INCLUDE's data/license endpoint and Kaggle's exact dataset/license could not be independently verified in this environment. A metadata JSON or public mirror is not permission to reuse video.
 - **Vocabulary is a candidate list, not a claim of verified dictionary coverage.** The ISLRTC dictionary launch page is cited, but individual headword entries could not be retrieved. A fluent ISL signer must check every candidate sign and regional variant before collecting/labeling clips.
-- **Human-recorded clips are the practical alternative.** The webcam recorder stores `video_path,label,signer_id`, provides clip review and deletion, and does not upload samples. The proposed collection target (20 candidate words, 30 clips each, at least three consenting signers) is a plan, not current coverage.
+- **Keep live-demo clips out of training.** The webcam recorder stores `video_path,label,signer_id` under `data/raw/own/`, provides clip review and deletion, and does not upload samples. Those clips are reserved for held-out live-demo checks. Training data must come from a separate, appropriately licensed external source under `data/raw/downloaded/`. The proposed collection target (20 candidate words, 30 clips each, at least three consenting signers) is a plan, not current coverage.
 - **Signer IDs define the split unit.** Clips from one signer must never appear across train/validation/test. Because signer grouping may leave a class without train support, the manifest/trainer fail instead of silently leaking signers.
 
 ## Models and experiment design
@@ -29,4 +29,3 @@
 - Keep speech synthesis in the user's browser. This avoids an additional server-side voice service; browser voices and availability vary.
 - Use Hugging Face Docker Spaces metadata and port 7860. Do not publish trained weights until derived-weight permissions and signer consent are established. Without a checkpoint, app inference is disabled rather than replaced with untrained/random output.
 - No deployment was attempted because HF credentials, a trained model, and a distribution decision are unavailable.
-

@@ -1,44 +1,49 @@
 # Project status and human actions
 
-**Current state:** implementation and test scaffolding are present, but there is no licensed/consented ISL media, no trained checkpoint, no real recognition result, and no public deployment. Recognition and latency numbers are intentionally not reported. WLASL audit data is ASL annotation metadata only; it is not local training data.
+**Current state:** the data-acquisition attempt and live segmentation path are implemented, but no licensed ISL video was acquired, no model was trained, and no public deployment exists. WLASL audit data is ASL annotation metadata only. Recognition accuracy, classifier latency, and camera FPS are intentionally not reported. The user's own recordings are reserved for a separate held-out live-demo set.
 
 | Phase | Status | Evidence / blocker |
 | --- | --- | --- |
-| 1. Data | **BLOCKED - needs human** | Recorder and validator are implemented. A dataset license/access route is unverified, target words need fluent-signer verification, and no consented clips are available. |
-| 2. Models and training | **BLOCKED - needs human** | Preprocessing, four temporal baselines, static baseline, seeded grid, MLflow, and Colab path are implemented. No real clips were processed and no model was trained. |
-| 3. Agent | **DONE** | Bounded tool loop, two provider adapters, offline fallback, JSONL traces, mocked tests, and the saved authored-case evaluation are present. No live provider call was made. |
-| 4. App | **BLOCKED - needs human** | Webcam and upload UI are implemented. Cannot validate predictions, real FPS/latency, or end-to-end behavior without a checkpoint, test clips, and a human camera session. |
+| 1. Data | **BLOCKED - needs human** | `tools.download_data` tried INCLUDE but the host refused the request before media, size, or license could be inspected; Kaggle CLI/config are absent. No media was acquired and `data/target_glosses.txt` remains an unverified candidate vocabulary. The actual acquisition audit is `reports/runs/data_acquisition_20261013T2244+0530.json`. |
+| 2. Models and training | **BLOCKED - needs human** | Preprocessing, MobileNetV2 and four temporal baselines, the seeded grid, MLflow, and Colab path exist. Preprocessing was attempted against the downloaded-manifest path and failed because no `data/raw/downloaded/clips.csv` exists. No real clips were processed and no model was trained. |
+| 3. Agent | **DONE (offline path only)** | Bounded tool loop, OpenAI-compatible/Anthropic adapters, offline fallback, JSONL traces, and mocked tests are present. The independent 30-case run yielded 0/20 flagged generated sentences, repeat precision 10/10, and recall 10/10 using deterministic offline mode; no live LLM provider call was made. This is not a semantic translation evaluation. |
+| 4. App | **BLOCKED - needs human** | The local OpenCV motion-segmented app is implemented and the explicit missing-checkpoint guard was exercised. The Streamlit webcam/upload app is secondary. No checkpoint/camera run exists, so predictions, FPS, camera-to-displayed-word latency, and full app integration remain unvalidated. |
 | 5. Deployment | **BLOCKED - needs human** | Docker Space metadata/configuration and click-by-click guide are present. No Hugging Face credential, trained model, or permission to distribute derived weights is available. |
 | 6. Documentation | **DONE** | README, technical report, decisions, deployment instructions, and interview notes document actual evidence and limitations. |
-| 7. Quality gate | **DONE** | Repository-wide Ruff and Black checks pass; all tests pass on supported Python 3.11.9 with a saved-workspace coverage report; GitHub Actions workflow added. New `NDArray[np.float32]` and `ArrayLike` annotations are validated against existing call sites. PyTorch factory/latency model signatures remain unresolved because their optional, lazily imported runtime types cannot be named safely without changing import behavior. |
+| 7. Quality gate | **DONE** | 44 tests passed on Python 3.11.9 (35% measured test coverage); Ruff passed on Python 3.11.9 and Black passed in the installed dev-tool environment. The GitHub Actions workflow is present. PyTorch factory/latency model signatures remain unresolved because their optional, lazily imported runtime types cannot be named safely without changing import behavior. |
 
 ## Exact steps to unblock data and model evaluation
 
-1. **Verify source rights and language labels.** Contact the INCLUDE maintainers for the current access procedure/license, or identify a specific Kaggle publisher and inspect that dataset's license and signer provenance. Ask a fluent ISL signer to verify every word and regional variant in `data/target_glosses.txt`. Record decisions in `data/sources.md`; do not substitute ASL.
-2. **Install on Python 3.11 and record consented clips.** Use an actual signer, informed consent, a private machine, and pseudonymous IDs. Repeat the recorder for every signer and each label; the current plan is 20 verified signs, 30 clips per label, and at least three signers. Review or delete every clip in the recorder UI.
+1. **Acquire licensed external ISL data.** Contact the INCLUDE maintainers for an official media URL, access instructions, license, and signer metadata. Alternatively install/configure Kaggle CLI credentials, verify a specific dataset card/license/signer provenance, and run the downloader:
 
    ```powershell
-   py -3.11 -m venv .venv
-   .\.venv\Scripts\Activate.ps1
-   python -m pip install -e ".[app,train,dev]"
-   python -m tools.record_clips --signer-id signer_01
-   # Repeat with distinct pseudonymous IDs, e.g. signer_02 and signer_03.
+   python -m pip install kaggle
+   # Configure ~/.kaggle/kaggle.json following Kaggle's official instructions.
+   python -m tools.download_data --kaggle-slug OWNER/VERIFIED-DATASET-SLUG
    ```
 
-3. **Validate and preprocess real recordings.** Fix every corrupt/missing clip or class-coverage issue reported before training.
+   If the source supplies clips manually, place the provider-approved files under `data/raw/downloaded/` and create `data/raw/downloaded/clips.csv` with `video_path,label,signer_id`. Do not guess signer IDs. Ask a fluent ISL signer to verify every word and regional variant in `data/target_glosses.txt` before training.
+2. **Validate and preprocess only the licensed external dataset.** Fix every corrupt/missing clip, missing signer ID, or class-coverage issue. Never use `data/raw/own/clips.csv` here.
 
    ```powershell
-   python -m tools.make_manifest --clips data/raw/clips.csv
-   python -m src.isl_recognition.data --source-csv data/raw/clips.csv --output-dir data/processed
+   python -m tools.make_manifest --clips data/raw/downloaded/clips.csv --output data/processed/manifest.csv --report reports/data_manifest.json
+   python -m src.isl_recognition.data --source-csv data/raw/downloaded/clips.csv --output-dir data/processed
    ```
 
-4. **Train/evaluate.** On hardware with compatible dependencies, run the full grid below. It is a substantial experiment. If local compute or install compatibility prevents training, run `notebooks/train_colab.ipynb` on Colab with the real consented dataset in private Drive storage. Save the generated per-run logs, ablation table, model card, and checkpoint; do not copy private clips into the repository.
+3. **Train/evaluate.** On hardware with compatible dependencies, run the full grid below. It is a substantial experiment. If local compute or install compatibility prevents training, run `notebooks/train_colab.ipynb` on Colab with the real licensed dataset in private storage. Save the generated per-run logs, ablation table, model card, and checkpoint; do not copy private clips into the repository.
 
    ```powershell
    python -m src.isl_recognition.train_landmarks --manifest data/processed/manifest.csv --architectures lstm gru transformer tcn --seeds 42 43 44 --modalities hands hands_pose --augmentations on off --sequence-lengths 16 32 48 --epochs 40
    ```
 
-5. **Test the application manually.** Start `streamlit run app/streamlit_app.py`; first use a consented upload clip, then webcam after granting permission. Review errors/confidence, repeat requests, TTS, and the agent trace. Record measurements only from a real run and its actual device.
+4. **Create an isolated demo set if desired.** Use actual signer consent and pseudonymous IDs; these clips are strictly for manual live-demo testing and are never included in the training manifest:
+
+   ```powershell
+   python -m tools.record_clips --signer-id signer_demo --manifest data/raw/own/clips.csv
+   python -m src.isl_recognition.live
+   ```
+
+5. **Test the application manually.** First run the local OpenCV demo above, then use `streamlit run app/streamlit_app.py` for the secondary upload/webcam/agent/TTS UI. Record FPS and camera-to-displayed-word latency only from an actual camera run with the trained checkpoint.
 6. **Deploy only after a rights review.** Follow [`DEPLOY.md`](DEPLOY.md), create a private HF Docker Space, and configure provider keys only as host secrets. Include a checkpoint only after the source license and signer consent explicitly permit derived-weight distribution. If not, a secure authenticated artifact retrieval path must be implemented first.
 
 ## Exact quality-check commands

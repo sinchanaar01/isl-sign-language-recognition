@@ -10,7 +10,6 @@ import time
 from collections import deque
 from pathlib import Path
 
-import numpy as np
 import streamlit as st
 from src.isl_recognition.agent import Prediction
 from src.isl_recognition.agent_loop import (
@@ -19,16 +18,11 @@ from src.isl_recognition.agent_loop import (
     vocabulary_from_file,
 )
 from src.isl_recognition.inference import (
-    PredictionSmoother,
     load_landmark_model,
     predict_video_file,
 )
-from src.isl_recognition.preprocessing import (
-    FEATURES_PER_FRAME,
-    normalize_frame,
-    normalize_sequence,
-    select_modality,
-)
+from src.isl_recognition.live import landmark_features, predict_segment
+from src.isl_recognition.sign_activity import SignActivityDetector
 
 st.set_page_config(page_title="ISL Recognition", page_icon="🤟", layout="wide")
 st.title("🤟 Real-Time Indian Sign Language Recognition")
@@ -64,32 +58,28 @@ def cached_landmark_model(
 class SignVideoProcessor(VideoProcessorBase):
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._smoother = PredictionSmoother(window_size=5)
         self._recent_predictions: deque[Prediction] = deque(maxlen=20)
-        self._last_emitted_label = ""
-        self._last_emitted_at = 0.0
         self._latest_label = "Waiting for a sign"
         self._latest_confidence = 0.0
         self._last_frame_latency_ms: float | None = None
         self._fps = 0.0
+        self._display_state = "ready"
         self._started_at = time.perf_counter()
         self._frame_count = 0
         self._model = None
         self._classes: list[str] = []
-        self._sequence_length = 32
         self._modality = "hands_pose"
-        self._sequence: deque[np.ndarray] = deque(maxlen=self._sequence_length)
+        self._detector = SignActivityDetector()
         self._holistic = None
         if checkpoint_path.is_file():
             (
                 self._model,
                 self._classes,
-                self._sequence_length,
+                _,
                 self._modality,
             ) = cached_landmark_model(
                 str(checkpoint_path.resolve()), checkpoint_path.stat().st_mtime
             )
-            self._sequence = deque(maxlen=self._sequence_length)
             self._holistic = mp.solutions.holistic.Holistic(
                 static_image_mode=False,
                 model_complexity=1,
@@ -102,51 +92,28 @@ class SignVideoProcessor(VideoProcessorBase):
         image = frame.to_ndarray(format="bgr24")
         if self._holistic is not None and self._model is not None:
             results = self._holistic.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-            landmarks = np.zeros(FEATURES_PER_FRAME, dtype=np.float32)
-            if results.pose_landmarks:
-                for index, point in enumerate(results.pose_landmarks.landmark):
-                    landmarks[index * 3 : index * 3 + 3] = (point.x, point.y, point.z)
-                    landmarks[99 + index] = point.visibility
-            for hand, start in (
-                (results.left_hand_landmarks, 132),
-                (results.right_hand_landmarks, 195),
-            ):
-                if hand:
-                    for index, point in enumerate(hand.landmark):
-                        landmarks[start + index * 3 : start + index * 3 + 3] = (
-                            point.x,
-                            point.y,
-                            point.z,
-                        )
-            self._sequence.append(normalize_frame(landmarks))
-            if len(self._sequence) == self._sequence_length:
-                sequence = normalize_sequence(
-                    np.stack(self._sequence), self._sequence_length
+            feature_frame, wrists = landmark_features(results)
+            update = self._detector.update(
+                feature_frame,
+                wrists,
+                hands_visible=bool(wrists),
+                timestamp=time.perf_counter(),
+            )
+            if update.segment is not None:
+                with self._lock:
+                    self._display_state = "processing"
+                label, confidence = predict_segment(
+                    self._model, update.segment, self._classes, self._modality
                 )
-                sequence = select_modality(sequence, self._modality)
-                import torch
-
-                with torch.inference_mode():
-                    logits = self._model(torch.from_numpy(sequence).unsqueeze(0))
-                    probabilities = torch.softmax(logits[0], dim=0).tolist()
-                label, confidence = self._smoother.update(
-                    {
-                        name: float(probability)
-                        for name, probability in zip(self._classes, probabilities)
-                    }
-                )
-                now = time.monotonic()
-                if (
-                    label.casefold() != self._last_emitted_label.casefold()
-                    and now - self._last_emitted_at >= 0.5
-                ):
-                    with self._lock:
-                        self._recent_predictions.append(Prediction(label, confidence))
-                    self._last_emitted_label = label
-                    self._last_emitted_at = now
+                self._detector.finish_processing()
                 with self._lock:
                     self._latest_label = label
                     self._latest_confidence = confidence
+                    self._recent_predictions.append(Prediction(label, confidence))
+                    self._display_state = self._detector.state
+            else:
+                with self._lock:
+                    self._display_state = self._detector.state
 
         elapsed = time.perf_counter() - started
         with self._lock:
@@ -156,9 +123,10 @@ class SignVideoProcessor(VideoProcessorBase):
             self._fps = self._frame_count / total_elapsed if total_elapsed > 0 else 0.0
             label = self._latest_label
             confidence = self._latest_confidence
+            state = self._display_state
         cv2.putText(
             image,
-            f"{label}  {confidence:.0%}",
+            f"{state}: {label}  {confidence:.0%}",
             (12, 32),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.8,
@@ -175,6 +143,7 @@ class SignVideoProcessor(VideoProcessorBase):
                 "buffer": list(self._recent_predictions),
                 "fps": self._fps,
                 "end_to_end_latency_ms": self._last_frame_latency_ms,
+                "state": self._display_state,
             }
 
     def clear_predictions(self) -> None:
@@ -194,6 +163,7 @@ def show_live_status(context) -> None:
         st.info("Allow camera access and start the stream to begin recognition.")
         return
     snapshot = processor.snapshot()
+    st.info(f"Live state: **{snapshot['state']}**")
     st.metric(
         "Current sign",
         snapshot["label"],
