@@ -1,0 +1,17 @@
+{
+  "audit_kind": "metadata_only_not_training_result",
+  "audited_at_utc": "2026-10-13T16:29:03.152166+00:00",
+  "source_url": "https://raw.githubusercontent.com/dxli94/WLASL/ac00e6be631c1a2a486621b65f202219f3964d6b/start_kit/WLASL_v0.3.json",
+  "local_path": "C:\\Users\\Lenovo\\Desktop\\sign language recognization using DL\\data\\raw\\WLASL_v0.3.json",
+  "file_size_bytes": 11932637,
+  "sha256": "31ba5a5c421bdbff87494ee22ca6d4e276a8dfac44f43cc9a58b76ed1c4cd684",
+  "file_mtime_utc": "2026-10-13T15:59:59.874285+00:00",
+  "gloss_category_count": 2000,
+  "annotation_instance_count": 21083,
+  "unique_signer_ids_in_metadata": 119,
+  "unique_video_ids_in_metadata": 21083,
+  "instances_missing_fields": {},
+  "video_media_downloaded": false,
+  "training_samples": 0,
+  "language": "American Sign Language (ASL)"
+}

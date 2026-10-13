@@ -1,5 +1,8 @@
-# Starter English gloss targets, not a verified ISL dictionary or an annotation map.
-# Confirm each gloss/sign with fluent ISL signers and the selected dataset before use.
+# Candidate English dictionary headwords for an ISLRTC ISL dictionary lookup.
+# Source: https://islrtc.nic.in/video/indian-sign-language-dictionary-launched-on-website/
+# These terms are not verified against individual dictionary entries yet.
+# A fluent ISL signer must confirm each entry, regional variant, and recorded sign
+# before these labels are used to collect training clips.
 HELLO
 THANK YOU
 PLEASE
@@ -15,18 +18,8 @@ FRIEND
 LOVE
 GOOD
 BAD
-GO
-COME
 STOP
 WAIT
 NAME
 WHAT
 WHERE
-WHO
-I
-YOU
-WANT
-NEED
-UNDERSTAND
-AGAIN
-TODAY

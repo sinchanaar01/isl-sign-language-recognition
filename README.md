@@ -2,13 +2,13 @@
 
 A research prototype for recognizing short, isolated sign clips from a webcam and turning a stream of recognized glosses into English text and speech. It provides an end-to-end data, training, evaluation, and demo pipeline; it does **not** include a pretrained model.
 
-> **Current evidence:** The official WLASL v0.3 annotation JSON (ASL) was downloaded and validated (2,000 glosses and 21,083 metadata instances). The original videos were not downloaded. No INCLUDE or Kaggle media samples were obtained, no model was trained, and no recognition accuracy or latency has been measured. WLASL is ASL, not ISL.
+> **Current evidence:** The official WLASL v0.3 annotation JSON (ASL) was downloaded and audited; its recorded counts/checksum are in [`reports/runs/wlasl_metadata_audit.json`](reports/runs/wlasl_metadata_audit.json). It contains metadata only; videos were not acquired. No INCLUDE or Kaggle media samples were obtained, no model was trained, and no recognition accuracy or latency has been measured. WLASL is ASL, not ISL.
 
 ## Problem and scope
 
 This project explores the two-stage problem of recognizing individual signs and composing a sequence into a natural sentence. The classifier predicts isolated glosses; the sentence layer is not a continuous sign-language translation model. English glosses do not encode ISL grammar, facial expression, spatial reference, or signer intent. Output must not be relied upon for safety-critical, legal, or medical communication.
 
-The desired starter vocabulary is listed in [`data/target_glosses.txt`](data/target_glosses.txt). Those English glosses are **not** a validated ISL dictionary: a fluent ISL signer and dataset-specific label mapping are required before training. The pipeline otherwise accepts any vocabulary present in a licensed labeled dataset.
+The candidate starter vocabulary is listed in [`data/target_glosses.txt`](data/target_glosses.txt) with an ISLRTC dictionary source citation. The dictionary's entry-level listing could not be verified here; these are lookup candidates, not attested ISL signs. A fluent ISL signer must verify each dictionary entry, variant, and label before any clips are collected or used for training.
 
 ## Architecture
 
@@ -62,7 +62,15 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[app,train,dev]"
 ```
 
-For licensed clips, prepare `data/raw/clips.csv` with `video_path,label,signer_id`. Relative paths are resolved against the CSV's directory. Missing/unknown signer IDs cannot be guessed; fix source metadata first. Then extract features and make a signer-exclusive split:
+For consented clips, use the webcam recorder and validator:
+
+```powershell
+python -m tools.record_clips --signer-id signer_01
+# At the review prompt: r replays the clip, d deletes it, q quits.
+python -m tools.make_manifest --clips data/raw/clips.csv
+```
+
+The planned data-collection target is the 20 candidate terms in `data/target_glosses.txt`, with 30 clips per term from at least 3 consenting signers. This is a target only; it is not current dataset size. The manifest tool checks media readability, signer counts, class coverage in training, and writes real split counts under `reports/`. For externally sourced licensed clips, prepare `data/raw/clips.csv` with `video_path,label,signer_id`; relative paths resolve against that CSV. Never guess missing signer identities.
 
 ```powershell
 python -m src.isl_recognition.data --source-csv data/raw/clips.csv --output-dir data/processed
