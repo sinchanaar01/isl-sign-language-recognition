@@ -1,0 +1,32 @@
+# Starter English gloss targets, not a verified ISL dictionary or an annotation map.
+# Confirm each gloss/sign with fluent ISL signers and the selected dataset before use.
+HELLO
+THANK YOU
+PLEASE
+SORRY
+YES
+NO
+HELP
+WATER
+FOOD
+HOME
+FAMILY
+FRIEND
+LOVE
+GOOD
+BAD
+GO
+COME
+STOP
+WAIT
+NAME
+WHAT
+WHERE
+WHO
+I
+YOU
+WANT
+NEED
+UNDERSTAND
+AGAIN
+TODAY
