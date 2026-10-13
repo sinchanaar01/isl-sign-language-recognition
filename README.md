@@ -37,7 +37,15 @@ flowchart LR
 
 **Static comparison:** MobileNetV2 is fine-tuned on static images using the same signer-independent split discipline. Static and sequence models solve related but different tasks; compare their results only with an explicit modality caveat.
 
-**Sentence agent:** An OpenAI-compatible chat-completions endpoint is used only when `OPENAI_API_KEY` is set. Low-confidence signs produce a repeat request. Without credentials, the demo uses a deterministic gloss-to-text fallback. Browser speech synthesis speaks the resulting sentence locally.
+**Sentence agent:** [`src/isl_recognition/agent_loop.py`](src/isl_recognition/agent_loop.py) provides a bounded (maximum five tool actions) tool-calling loop. It supports OpenAI-compatible Chat Completions and Anthropic Messages APIs selected by `LLM_PROVIDER`; low-confidence signs ask for a repeat of that sign only, preserving the rest of the buffer. Vocabulary lookup returns candidate status, and sentence verification combines a rule-based unsupported-content-word guard with an optional LLM judge. Speech is permitted only for a verified sentence. Every step is written to local JSONL files under `reports/agent_traces/` (ignored by Git to avoid publishing potentially sensitive sign sequences). Without API credentials, a deterministic offline sentence fallback runs through the same verification gate.
+
+Run the offline hand-written agent evaluation:
+
+```powershell
+python -m tools.evaluate_agent
+```
+
+The saved run in [`reports/runs/agent_eval_20261013T164359Z.json`](reports/runs/agent_eval_20261013T164359Z.json) evaluates only the text fallback and repeat gate on authored examples; it is **not** sign-recognition accuracy, a human sign-quality evaluation, or an LLM evaluation. The token-based hallucination guard does not establish semantic faithfulness.
 
 ## Datasets and licenses
 
@@ -128,13 +136,16 @@ Optional environment variables:
 ```powershell
 $env:OPENAI_API_KEY = "..."
 $env:OPENAI_MODEL = "gpt-4o-mini"
+$env:LLM_PROVIDER = "openai" # or anthropic
+$env:ANTHROPIC_API_KEY = "..." # required only with LLM_PROVIDER=anthropic
+$env:ANTHROPIC_MODEL = "claude-3-5-haiku-latest"
 # Optional OpenAI-compatible API endpoint:
 $env:OPENAI_BASE_URL = "https://api.openai.com/v1/chat/completions"
 # Optional checkpoint override:
 $env:ISL_MODEL_PATH = "models/best_landmark.pt"
 ```
 
-Keys are never stored in the repository. LLM mode sends the recognized gloss sequence to the configured provider; do not enable it for sensitive conversations without reviewing that provider's data handling.
+Keys are never stored in the repository. LLM mode sends recognized glosses and sentence-verification prompts to the configured provider; do not enable it for sensitive conversations without reviewing provider data handling.
 
 ## Tests
 

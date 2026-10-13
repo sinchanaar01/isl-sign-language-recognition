@@ -10,7 +10,7 @@ MediaPipe Holistic provides 33 pose landmarks (xyz and visibility) and 21 landma
 
 The temporal comparison comprises two-layer bidirectional LSTM and GRU classifiers, a small two-layer Transformer with learned positional embeddings, and a temporal convolutional network (TCN). Ablations vary hand-only wrist/palm-normalized features versus pose+hands, augmentation on/off, sequence length, and random seed. The full default grid has not been executed. A MobileNetV2 image classifier provides a separate static-sign baseline and requires signer IDs encoded in filenames. Runs log training parameters, validation curves, checkpoint artifacts, test metrics, and device information to MLflow. Best checkpoint selection is by validation accuracy. Held-out reports include accuracy, per-class precision/recall/F1, a confusion matrix, top confusion pairs, and model-only latency; test-clip MediaPipe+model latency is measured when source videos are available.
 
-The app maintains a short moving average of class probabilities. A confidence-aware agent requests a repeated sign below a configurable threshold; above the threshold, it sends ordered glosses to an OpenAI-compatible chat completion API when a key is configured. Without a key it uses deterministic text fallback. Speech is emitted through browser speech synthesis.
+The app maintains a short moving average of class probabilities. A confidence-aware, maximum-five-step agent uses OpenAI-compatible or Anthropic native tool calling. It can inspect the sign buffer, request a repeat for an individual low-confidence sign, look up candidate vocabulary, draft a sentence, verify it with a lexical content-word guard and optional LLM judge, and queue TTS only after acceptance. With no provider key, the offline fallback follows the same rule-based verification. Every tool decision is logged to an ignored local JSONL trace.
 
 ## Results
 
@@ -23,6 +23,8 @@ The app maintains a short moving average of class probabilities. A confidence-aw
 | TCN landmarks | Not measured | Not measured | Not measured |
 
 The WLASL v0.3 JSON was retrieved from the official GitHub repository and parsed successfully: 2,000 gloss categories and 21,083 annotated instances. These are **metadata counts**, not locally available video counts or model samples. WLASL is ASL and its upstream Computational Use of Data Agreement must be reviewed and accepted before acquiring/using the videos. INCLUDE first-party media/license could not be verified from this environment; Kaggle discovery was blocked and no specific uploader/license was selected. Therefore, a meaningful ISL metric cannot yet be computed.
+
+The hand-written offline-agent evaluation is saved at `reports/runs/agent_eval_20261013T164359Z.json`. It covers thirty authored gloss cases, of which twenty-five were eligible to produce text and five were intentionally low-confidence repeat cases. On this fixed set, the deterministic fallback exactly matched all eligible expected sentences; the mechanical unsupported-content-word detector flagged none; and repeat-request precision was 1.0 on five true-positive requests. These measurements validate only the code's behavior on the specified authored strings; they are not recognition quality, human linguistic evaluation, or LLM-provider quality. The evaluator must be rerun after code/data changes.
 
 ## Error analysis
 

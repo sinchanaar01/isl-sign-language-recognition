@@ -16,6 +16,7 @@ mlruns/
 wandb/
 reports/*.png
 reports/*.json
+reports/agent_traces/
 coverage.xml
 .ruff_cache/
 .mypy_cache/

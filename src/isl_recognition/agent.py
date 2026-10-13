@@ -82,6 +82,7 @@ class SentenceAgent:
         templates = {
             ("thank you",): "Thank you.",
             ("thank_you",): "Thank you.",
+            ("thank", "you"): "Thank you.",
             ("hello",): "Hello!",
             ("please", "help", "me"): "Please help me.",
             ("i", "need", "help"): "I need help.",
@@ -93,7 +94,8 @@ class SentenceAgent:
         if normalized in templates:
             return templates[normalized]
         words = " ".join(signs)
-        return words[0].upper() + words[1:] + "."
+        sentence = words.casefold()
+        return sentence[0].upper() + sentence[1:] + "."
 
     def _generate_with_llm(self, signs: list[str]) -> str:
         body = {
